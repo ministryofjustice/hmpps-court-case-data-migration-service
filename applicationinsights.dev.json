@@ -1,6 +1,6 @@
 {
   "role": {
-    "name": "hmpps-template-kotlin"
+    "name": "hmpps-court-case-data-migration-service"
   },
   "customDimensions": {
     "service.version": "${BUILD_NUMBER}"

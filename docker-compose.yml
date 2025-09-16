@@ -1,11 +1,11 @@
 version: "3"
 services:
-  hmpps-template-kotlin:
+  hmpps-court-case-data-migration-service:
     build:
       context: .
     networks:
       - hmpps
-    container_name: hmpps-template-kotlin
+    container_name: hmpps-court-case-data-migration-service
     ports:
       - "8080:8080"
     healthcheck:
