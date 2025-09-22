@@ -60,8 +60,8 @@ order by o.id"""
     .build()
 
   @Bean
-  fun processor(sourceJdbcTemplate: JdbcTemplate): ItemProcessor<OffenceQueryResult, uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence> = CompositeItemProcessorBuilder<OffenceQueryResult, uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence>()
-    .delegates(listOf(OffenceProcessor(sourceJdbcTemplate)))
+  fun processor(): ItemProcessor<OffenceQueryResult, uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence> = CompositeItemProcessorBuilder<OffenceQueryResult, uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence>()
+    .delegates(listOf(OffenceProcessor()))
     .build()
 
   @Bean
@@ -72,17 +72,17 @@ order by o.id"""
     .build()
 
   @Bean
-  fun offenceStep(sourceJdbcTemplate: JdbcTemplate): Step = StepBuilder("offenceStep", jobRepository)
+  fun offenceStep(): Step = StepBuilder("offenceStep", jobRepository)
     .chunk<OffenceQueryResult, uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence>(batchProperties.chunkSize, transactionManager)
     .reader(reader())
-    .processor(processor(sourceJdbcTemplate))
+    .processor(processor())
     .writer(writer())
     .build()
 
   @Bean
-  fun job(sourceJdbcTemplate: JdbcTemplate, offenceJobListener: OffenceJobListener): Job = JobBuilder("offenceJob", jobRepository)
+  fun job(offenceJobListener: OffenceJobListener): Job = JobBuilder("offenceJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(offenceJobListener)
-    .start(offenceStep(sourceJdbcTemplate))
+    .start(offenceStep())
     .build()
 }
