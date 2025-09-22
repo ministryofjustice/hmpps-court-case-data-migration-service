@@ -4,13 +4,11 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.batch.item.ItemProcessor
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.jdbc.core.JdbcTemplate
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Plea as TargetPlea
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence as TargetOffence
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Plea as TargetPlea
 
-class OffenceProcessor(@Qualifier("sourceJdbcTemplate") private val sourceJdbcTemplate: JdbcTemplate) : ItemProcessor<OffenceQueryResult, TargetOffence> {
+class OffenceProcessor : ItemProcessor<OffenceQueryResult, TargetOffence> {
 
   private companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
@@ -30,10 +28,9 @@ class OffenceProcessor(@Qualifier("sourceJdbcTemplate") private val sourceJdbcTe
     val targetOffence = TargetOffence(
       id = offenceQueryResult.id,
       title = offenceQueryResult.title,
-      plea = targetPlea
+      plea = targetPlea,
     )
 
     return targetOffence
   }
-
 }

@@ -20,7 +20,7 @@ class DataSourceConfig {
   @Primary
   @Bean(name = ["dataSource"])
   fun batchDataSource(
-    @Qualifier("dataSourceProperties") properties: DataSourceProperties
+    @Qualifier("dataSourceProperties") properties: DataSourceProperties,
   ): DataSource = properties.initializeDataSourceBuilder().build()
 
   @Bean
@@ -29,7 +29,8 @@ class DataSourceConfig {
 
   @Bean
   fun sourceDataSource(
-    @Qualifier("sourceDataSourceProperties") properties: DataSourceProperties): DataSource = properties.initializeDataSourceBuilder().build()
+    @Qualifier("sourceDataSourceProperties") properties: DataSourceProperties,
+  ): DataSource = properties.initializeDataSourceBuilder().build()
 
   @Bean
   @ConfigurationProperties("app.datasource.target")
@@ -37,17 +38,14 @@ class DataSourceConfig {
 
   @Bean
   fun targetDataSource(
-    @Qualifier("targetDataSourceProperties") properties: DataSourceProperties): DataSource = properties.initializeDataSourceBuilder().build()
+    @Qualifier("targetDataSourceProperties") properties: DataSourceProperties,
+  ): DataSource = properties.initializeDataSourceBuilder().build()
 
   @Bean
   @Qualifier("sourceJdbcTemplate")
-  fun sourceJdbcTemplate(@Qualifier("sourceDataSource") dataSource: DataSource): JdbcTemplate =
-    JdbcTemplate(dataSource)
+  fun sourceJdbcTemplate(@Qualifier("sourceDataSource") dataSource: DataSource): JdbcTemplate = JdbcTemplate(dataSource)
 
   @Bean
   @Qualifier("targetJdbcTemplate")
-  fun targetJdbcTemplate(@Qualifier("targetDataSource") dataSource: DataSource): JdbcTemplate =
-    JdbcTemplate(dataSource)
-
-
+  fun targetJdbcTemplate(@Qualifier("targetDataSource") dataSource: DataSource): JdbcTemplate = JdbcTemplate(dataSource)
 }

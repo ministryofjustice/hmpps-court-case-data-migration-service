@@ -12,29 +12,27 @@ import org.springframework.web.bind.annotation.RestController
 import java.time.Instant
 
 @RestController
-class JobController(private val jobLauncher: JobLauncher,
-                    private val job: Job) {
+class JobController(
+  private val jobLauncher: JobLauncher,
+  private val job: Job,
+) {
 
   private companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
   @GetMapping("/run-job")
-  fun runJob(): ResponseEntity<String> {
-    return try {
+  fun runJob(): ResponseEntity<String> = try {
+    log.info("Starting job")
 
-      log.info("Starting job")
+    val params: JobParameters = JobParametersBuilder()
+      .addString("run.id", Instant.now().toString())
+      .toJobParameters()
 
-      val params: JobParameters = JobParametersBuilder()
-        .addString("run.id", Instant.now().toString())
-        .toJobParameters()
+    val jobExecution = jobLauncher.run(job, params)
 
-      val jobExecution = jobLauncher.run(job, params)
-
-      ResponseEntity.ok("Job ${jobExecution.jobInstance.jobName} started with status ${jobExecution.status}")
-    } catch (ex: Exception) {
-      ResponseEntity.internalServerError().body("Job failed to start: ${ex.message}")
-    }
+    ResponseEntity.ok("Job ${jobExecution.jobInstance.jobName} started with status ${jobExecution.status}")
+  } catch (ex: Exception) {
+    ResponseEntity.internalServerError().body("Job failed to start: ${ex.message}")
   }
-
 }
