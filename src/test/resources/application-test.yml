@@ -5,5 +5,45 @@ management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
 
-hmpps-auth:
-  url: "http://localhost:8090/auth"
+nomis-oauth:
+  base-url: http://localhost:8090/auth
+
+database:
+  batch:
+    name: hmpps_court_case_service_db
+    endpoint: localhost:5432
+    username: admin
+    password: password
+  source: # add dev database here
+    name: dbaaade99b4f658d25
+    endpoint: localhost:5431
+    username:
+    password:
+  target:
+    name: hmpps_court_case_service_db
+    endpoint: localhost:5432
+    username: admin
+    password: password
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${database.batch.endpoint}/${database.batch.name}?currentSchema=${database.batch.schema}
+    username: ${database.batch.username}
+    password: ${database.batch.password}
+    driver-class-name: org.postgresql.Driver
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: true
+
+app:
+  datasource:
+    source:
+      url: jdbc:postgresql://${database.source.endpoint}/${database.source.name}?schema=${database.source.schema}
+      username: ${database.source.username}
+      password: ${database.source.password}
+    target:
+      url: jdbc:postgresql://${database.target.endpoint}/${database.target.name}?schema=${database.target.schema}
+      username: ${database.target.username}
+      password: ${database.target.password}

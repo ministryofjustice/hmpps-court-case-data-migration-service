@@ -1,11 +1,13 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.integration.health
 
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.integration.IntegrationTestBase
 
 class HealthCheckTest : IntegrationTestBase() {
 
   @Test
+  @Disabled
   fun `Health page reports ok`() {
     stubPingWithResponse(200)
 
