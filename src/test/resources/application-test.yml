@@ -36,6 +36,8 @@ spring:
       initialize-schema: always
     job:
       enabled: true
+  flyway:
+    enabled: false
 
 app:
   datasource:
