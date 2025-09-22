@@ -17,7 +17,6 @@ import org.springframework.batch.item.support.builder.CompositeItemProcessorBuil
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.OffenceJobListener
