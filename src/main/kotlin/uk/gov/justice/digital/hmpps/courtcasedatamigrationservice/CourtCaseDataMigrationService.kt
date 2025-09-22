@@ -1,9 +1,12 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.configuration.BatchProperties
 
 @SpringBootApplication
+@EnableConfigurationProperties(BatchProperties::class)
 class CourtCaseDataMigrationService
 
 fun main(args: Array<String>) {
