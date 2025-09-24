@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.configuration
+package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 
