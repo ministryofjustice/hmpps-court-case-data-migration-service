@@ -20,41 +20,8 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
   override fun process(offenceQueryResult: OffenceQueryResult): Offence {
     log.info("Processing offence: {}", offenceQueryResult.id)
 
-    val plea = if (offenceQueryResult.pleaId != null) {
-      objectMapper.writeValueAsString(
-        Plea(
-          id = offenceQueryResult.pleaId,
-          date = offenceQueryResult.pleaDate,
-          value = offenceQueryResult.pleaValue,
-          createdAt = offenceQueryResult.pleaCreated,
-          createdBy = offenceQueryResult.pleaCreatedBy,
-          lastUpdatedAt = offenceQueryResult.pleaLastUpdated,
-          lastUpdatedBy = offenceQueryResult.pleaLastUpdatedBy,
-          isDeleted = offenceQueryResult.pleaDeleted,
-          version = offenceQueryResult.pleaVersion,
-        ),
-      )
-    } else {
-      null
-    }
-
-    val verdict = if (offenceQueryResult.verdictId != null) {
-      objectMapper.writeValueAsString(
-        Verdict(
-          id = offenceQueryResult.verdictId,
-          date = offenceQueryResult.verdictDate,
-          type = offenceQueryResult.verdictTypeDescription,
-          createdAt = offenceQueryResult.verdictCreated,
-          createdBy = offenceQueryResult.verdictCreatedBy,
-          lastUpdatedAt = offenceQueryResult.verdictLastUpdated,
-          lastUpdatedBy = offenceQueryResult.verdictLastUpdatedBy,
-          isDeleted = offenceQueryResult.verdictDeleted,
-          version = offenceQueryResult.verdictVersion,
-        ),
-      )
-    } else {
-      null
-    }
+    val plea = if (offenceQueryResult.pleaId != null) buildPleaAsJSONBString(offenceQueryResult.pleaId, offenceQueryResult) else null
+    val verdict = if (offenceQueryResult.verdictId != null) buildVerdictAsJSONBString(offenceQueryResult.verdictId, offenceQueryResult) else null
 
     val offence = Offence(
       id = offenceQueryResult.id,
@@ -79,4 +46,38 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
 
     return offence
   }
+
+  private fun buildVerdictAsJSONBString(
+    verdictId: Integer,
+    offenceQueryResult: OffenceQueryResult,
+  ): String? = objectMapper.writeValueAsString(
+    Verdict(
+      id = verdictId,
+      date = offenceQueryResult.verdictDate,
+      type = offenceQueryResult.verdictTypeDescription,
+      createdAt = offenceQueryResult.verdictCreated,
+      createdBy = offenceQueryResult.verdictCreatedBy,
+      lastUpdatedAt = offenceQueryResult.verdictLastUpdated,
+      lastUpdatedBy = offenceQueryResult.verdictLastUpdatedBy,
+      isDeleted = offenceQueryResult.verdictDeleted,
+      version = offenceQueryResult.verdictVersion,
+    ),
+  )
+
+  private fun buildPleaAsJSONBString(
+    pleaId: Integer,
+    offenceQueryResult: OffenceQueryResult,
+  ): String? = objectMapper.writeValueAsString(
+    Plea(
+      id = pleaId,
+      date = offenceQueryResult.pleaDate,
+      value = offenceQueryResult.pleaValue,
+      createdAt = offenceQueryResult.pleaCreated,
+      createdBy = offenceQueryResult.pleaCreatedBy,
+      lastUpdatedAt = offenceQueryResult.pleaLastUpdated,
+      lastUpdatedBy = offenceQueryResult.pleaLastUpdatedBy,
+      isDeleted = offenceQueryResult.pleaDeleted,
+      version = offenceQueryResult.pleaVersion,
+    ),
+  )
 }
