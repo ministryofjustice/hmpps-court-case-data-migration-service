@@ -16,21 +16,8 @@ class OffenceJobListener(
 ) : JobExecutionListener {
 
   private val log = LoggerFactory.getLogger(OffenceJobListener::class.java)
-  private var startTime: Instant? = null
-
-  override fun beforeJob(jobExecution: JobExecution) {
-    log.info("Job is starting: ${jobExecution.jobInstance.jobName}")
-    startTime = Instant.now()
-    log.info("Job started at: $startTime")
-  }
 
   override fun afterJob(jobExecution: JobExecution) {
-    val endTime = Instant.now()
-    log.info("Job ended at: $endTime")
-
-    val duration = Duration.between(startTime, endTime)
-    log.info("Total job duration: ${duration.toMinutes()} minutes and ${duration.seconds % 60} seconds")
-
     val sourceCount = sourceJdbcTemplate.queryForObject("SELECT COUNT(*) FROM courtcaseservice.offence", Int::class.java)
     val targetCount = targetJdbcTemplate.queryForObject("SELECT COUNT(*) FROM hmpps_court_case_service.offence", Int::class.java)
 

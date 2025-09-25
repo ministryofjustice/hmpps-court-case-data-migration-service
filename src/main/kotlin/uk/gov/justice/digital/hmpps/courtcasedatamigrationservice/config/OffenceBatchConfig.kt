@@ -21,6 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.OffenceJobListener
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.OffenceProcessor
 import javax.sql.DataSource
 
@@ -110,8 +111,9 @@ order by o.id"""
     .build()
 
   @Bean
-  fun job(offenceJobListener: OffenceJobListener): Job = JobBuilder("offenceJob", jobRepository)
+  fun job(timerJobListener: TimerJobListener, offenceJobListener: OffenceJobListener): Job = JobBuilder("offenceJob", jobRepository)
     .incrementer(RunIdIncrementer())
+    .listener(timerJobListener)
     .listener(offenceJobListener)
     .start(offenceStep())
     .build()
