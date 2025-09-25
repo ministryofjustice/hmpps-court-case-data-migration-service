@@ -8,6 +8,7 @@ generic-service:
     host: court-case-data-migration-service-preprod.hmpps.service.justice.gov.uk
 
   env:
+    SPRING_PROFILES_ACTIVE: "preprod"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: "applicationinsights.dev.json"
     HMPPS_AUTH_URL: "https://sign-in-preprod.hmpps.service.justice.gov.uk/auth"
 
