@@ -48,7 +48,7 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
   }
 
   private fun buildVerdictAsJSONBString(
-    verdictId: Integer,
+    verdictId: Int,
     offenceQueryResult: OffenceQueryResult,
   ): String? = objectMapper.writeValueAsString(
     Verdict(
@@ -65,7 +65,7 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
   )
 
   private fun buildPleaAsJSONBString(
-    pleaId: Integer,
+    pleaId: Int,
     offenceQueryResult: OffenceQueryResult,
   ): String? = objectMapper.writeValueAsString(
     Plea(
