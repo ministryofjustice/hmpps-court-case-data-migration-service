@@ -6,8 +6,6 @@ import org.springframework.batch.core.JobExecutionListener
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
-import java.time.Duration
-import java.time.Instant
 
 @Component
 class OffenceJobListener(
