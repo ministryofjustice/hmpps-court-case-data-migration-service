@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.0.0"
   kotlin("plugin.spring") version "2.2.10"
@@ -10,7 +12,12 @@ configurations {
 dependencies {
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.5.0")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
+  implementation("org.springframework.boot:spring-boot-starter-batch")
+  implementation("org.springframework.boot:spring-boot-starter-jdbc")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11")
+  implementation("org.flywaydb:flyway-core")
+  implementation("org.flywaydb:flyway-database-postgresql")
+  runtimeOnly("org.postgresql:postgresql")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.5.0")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")
@@ -27,4 +34,8 @@ tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
   }
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.compilerOptions {
+  freeCompilerArgs.set(listOf("-Xannotation-default-target=param-property"))
 }

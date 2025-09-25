@@ -1,11 +1,13 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.integration
 
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.batch.core.repository.JobRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
@@ -15,6 +17,9 @@ import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
+
+  @MockitoBean
+  lateinit var jobRepository: JobRepository
 
   @Autowired
   protected lateinit var webTestClient: WebTestClient

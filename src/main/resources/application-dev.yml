@@ -1,2 +1,25 @@
-hmpps-auth:
-  url: "http://localhost:8090/auth"
+nomis-oauth:
+  base-url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${RDS_INSTANCE_ENDPOINT}/${DATABASE_NAME}?currentSchema=${database.batch.schema}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: true
+
+app:
+  datasource:
+    source:
+      url: jdbc:postgresql://${RDS_INSTANCE_ENDPOINT}/${DATABASE_NAME}?schema=${database.source.schema}
+      username: ${DATABASE_USERNAME}
+      password: ${DATABASE_PASSWORD}
+    target:
+      url: jdbc:postgresql://${RDS_INSTANCE_ENDPOINT}/${DATABASE_NAME}?schema=${database.target.schema}
+      username: ${DATABASE_USERNAME}
+      password: ${DATABASE_PASSWORD}

@@ -1,12 +1,5 @@
-server:
-  shutdown: immediate
-
-management.endpoint:
-  health.cache.time-to-live: 0
-  info.cache.time-to-live: 0
-
 nomis-oauth:
-  base-url: http://localhost:8090/auth
+  base-url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
 
 database:
   batch:
@@ -35,9 +28,7 @@ spring:
     jdbc:
       initialize-schema: always
     job:
-      enabled: false
-  flyway:
-    enabled: false
+      enabled: true
 
 app:
   datasource:
