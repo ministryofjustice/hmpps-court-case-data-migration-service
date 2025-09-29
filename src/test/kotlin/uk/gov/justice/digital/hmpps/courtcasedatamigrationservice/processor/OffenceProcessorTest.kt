@@ -1,11 +1,14 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.JudicialResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Plea
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Verdict
 import java.sql.Timestamp
@@ -57,6 +60,7 @@ class OffenceProcessorTest {
       verdictLastUpdatedBy = "judge",
       verdictDeleted = false,
       verdictVersion = 1,
+      judicialResults = """[{"id" : 59222, "is_convicted_result" : false, "judicial_result_type_id" : "705140dc-833a-4aa0-a872-839009fc4494", "label" : "Sent to Crown Court for trial on unconditional bail", "result_text" : null, "created" : "2022-10-04T12:09:46.003856", "created_by" : "(court-case-matcher)", "last_updated" : null, "last_updated_by" : null, "deleted" : false, "version" : 0}]""",
     )
 
     val offence = processor.process(offenceQueryResult)
@@ -98,5 +102,24 @@ class OffenceProcessorTest {
     assertThat(verdict.lastUpdatedBy).isEqualTo("judge")
     assertThat(verdict.isDeleted).isFalse()
     assertThat(verdict.version).isEqualTo(1)
+
+    val judicialResults: List<JudicialResult> = objectMapper.readValue(
+      offence.judicialResults,
+      object : TypeReference<List<JudicialResult>>() {},
+    )
+
+    assertThat(judicialResults.size).isEqualTo(1)
+    assertThat(judicialResults[0].id).isEqualTo(59222)
+    assertThat(judicialResults[0].isConvictedResult).isEqualTo(false)
+    assertThat(judicialResults[0].label).isEqualTo("Sent to Crown Court for trial on unconditional bail")
+    assertThat(judicialResults[0].resultTypeId).isEqualTo("705140dc-833a-4aa0-a872-839009fc4494")
+    assertThat(judicialResults[0].resultText).isNull()
+    assertThat(judicialResults[0].isJudicialResultDeleted).isNull()
+    assertThat(judicialResults[0].createdBy).isEqualTo("(court-case-matcher)")
+    assertThat(judicialResults[0].createdAt).isEqualTo("2022-10-04T12:09:46.003856")
+    assertThat(judicialResults[0].updatedBy).isNull()
+    assertThat(judicialResults[0].updatedAt).isNull()
+    assertThat(judicialResults[0].isDeleted).isFalse()
+    assertThat(judicialResults[0].version).isEqualTo(0)
   }
 }
