@@ -36,4 +36,5 @@ data class OffenceQueryResult(
   val verdictLastUpdatedBy: String?,
   val verdictDeleted: Boolean?,
   val verdictVersion: Int?,
+  val judicialResults: String?,
 )

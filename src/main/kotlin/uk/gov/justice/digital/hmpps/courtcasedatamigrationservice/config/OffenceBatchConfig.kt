@@ -1,8 +1,11 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
 
+import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
+import org.springframework.batch.core.SkipListener
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing
+import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.batch.core.job.builder.JobBuilder
 import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.core.repository.JobRepository
@@ -15,6 +18,7 @@ import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilde
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder
 import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.transaction.PlatformTransactionManager
@@ -35,18 +39,54 @@ class OffenceBatchConfig(
   private val batchProperties: BatchProperties,
 ) {
 
+  private val log = LoggerFactory.getLogger(OffenceBatchConfig::class.java)
+
   @Bean
-  fun reader(): JdbcCursorItemReader<OffenceQueryResult> = JdbcCursorItemReaderBuilder<OffenceQueryResult>()
+  @StepScope
+  fun reader(
+    @Value("#{jobParameters['minId']}") minId: Long?,
+    @Value("#{jobParameters['maxId']}") maxId: Long?,
+  ): JdbcCursorItemReader<OffenceQueryResult> = JdbcCursorItemReaderBuilder<OffenceQueryResult>()
     .name("offenceReader")
     .dataSource(sourceDataSource)
     .sql(
-      """select o.id, o.fk_hearing_defendant_id, o.offence_code, o.summary, o.title, o.sequence, o.act, o.list_no, o.short_term_custody_predictor_score, o.created, o.created_by, o.last_updated, o.last_updated_by, o.deleted, o.version, 
-p.id plea_id, p.date plea_date, p.value plea_value, p.created plea_created, p.created_by plea_created_by, p.last_updated plea_last_updated, p.last_updated_by plea_last_updated_by, p.deleted plea_deleted, p.version plea_version, 
-v."id" verdict_id, v."date" verdict_date, v.type_description verdict_type_description, v.created verdict_created, v.created_by verdict_created_by, v.last_updated verdict_last_updated, v.last_updated_by verdict_last_updated_by, v.deleted verdict_deleted, v.version verdict_version  
-from 	courtcaseservice.offence o left join courtcaseservice.plea p on (o.plea_id = p.id)
-		left join courtcaseservice.verdict v on (o.verdict_id = v.id)
-order by o.id"""
-        .trimMargin(),
+      """SELECT
+    o.id, o.fk_hearing_defendant_id, o.offence_code, o.summary, o.title, o.sequence, o.act, o.list_no, 
+    o.short_term_custody_predictor_score, o.created, o.created_by, o.last_updated, o.last_updated_by, 
+    o.deleted, o.version,
+
+    p.id AS plea_id, p.date AS plea_date, p.value AS plea_value, p.created AS plea_created, 
+    p.created_by AS plea_created_by, p.last_updated AS plea_last_updated, 
+    p.last_updated_by AS plea_last_updated_by, p.deleted AS plea_deleted, p.version AS plea_version,
+
+    v.id AS verdict_id, v.date AS verdict_date, v.type_description AS verdict_type_description, 
+    v.created AS verdict_created, v.created_by AS verdict_created_by, 
+    v.last_updated AS verdict_last_updated, v.last_updated_by AS verdict_last_updated_by, 
+    v.deleted AS verdict_deleted, v.version AS verdict_version,
+
+    (
+        SELECT json_agg(json_build_object(
+            'id', jr.id,
+            'is_convicted_result', jr.is_convicted_result,
+            'judicial_result_type_id', jr.judicial_result_type_id,
+            'label', jr.label,
+            'result_text', jr.result_text,
+            'created', jr.created,
+            'created_by', jr.created_by,
+            'last_updated', jr.last_updated,
+            'last_updated_by', jr.last_updated_by,
+            'deleted', jr.deleted,
+            'version', jr.version
+        ))
+        FROM courtcaseservice.judicial_result jr
+        WHERE jr.offence_id = o.id
+    ) AS judicial_results
+
+FROM courtcaseservice.offence o
+LEFT JOIN courtcaseservice.plea p ON o.plea_id = p.id
+LEFT JOIN courtcaseservice.verdict v ON o.verdict_id = v.id
+WHERE o.id BETWEEN $minId AND $maxId
+      """.trimMargin(),
     )
     .rowMapper { rs, _ ->
       OffenceQueryResult(
@@ -65,7 +105,7 @@ order by o.id"""
         lastUpdatedBy = rs.getString("last_updated_by"),
         deleted = rs.getBoolean("deleted"),
         version = rs.getInt("version"),
-        pleaId = rs.getInt("plea_id"),
+        pleaId = rs.getObject("plea_id", Integer::class.java)?.toInt(),
         pleaDate = rs.getTimestamp("plea_date"),
         pleaValue = rs.getString("plea_value"),
         pleaCreated = rs.getTimestamp("plea_created"),
@@ -74,7 +114,7 @@ order by o.id"""
         pleaLastUpdatedBy = rs.getString("plea_last_updated_by"),
         pleaDeleted = rs.getBoolean("plea_deleted"),
         pleaVersion = rs.getInt("plea_version"),
-        verdictId = rs.getInt("verdict_id"),
+        verdictId = rs.getObject("verdict_id", Integer::class.java)?.toInt(),
         verdictDate = rs.getTimestamp("verdict_date"),
         verdictTypeDescription = rs.getString("verdict_type_description"),
         verdictCreated = rs.getTimestamp("verdict_created"),
@@ -83,6 +123,7 @@ order by o.id"""
         verdictLastUpdatedBy = rs.getString("verdict_last_updated_by"),
         verdictDeleted = rs.getBoolean("verdict_deleted"),
         verdictVersion = rs.getInt("verdict_version"),
+        judicialResults = rs.getString("judicial_results"),
       )
     }
     .build()
@@ -96,18 +137,34 @@ order by o.id"""
   fun writer(): JdbcBatchItemWriter<Offence> = JdbcBatchItemWriterBuilder<Offence>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.offence (id, code, title, act, list_number, sequence, facts, is_discontinued, short_term_custody_predictor_score, plea, verdict, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :code, :title, :act, :list_number, :sequence, :facts, :isDiscontinued, :shortTermCustodyPredictorScore, CAST(:plea AS jsonb), CAST(:verdict AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.offence (id, code, title, act, list_number, sequence, facts, is_discontinued, short_term_custody_predictor_score, plea, verdict, judicial_results, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :code, :title, :act, :list_number, :sequence, :facts, :isDiscontinued, :shortTermCustodyPredictorScore, CAST(:plea AS jsonb), CAST(:verdict AS jsonb), CAST(:judicialResults AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
 
   @Bean
+  fun skipListener() = object : SkipListener<OffenceQueryResult, Offence> {
+    override fun onSkipInRead(t: Throwable) {
+      log.warn("Skipped during read: ${t.message}")
+    }
+
+    override fun onSkipInProcess(item: OffenceQueryResult, t: Throwable) {
+      log.warn("Skipped during process: ${item.id}, reason: ${t.message}")
+    }
+
+    override fun onSkipInWrite(item: Offence, t: Throwable) {
+      log.warn("Skipped during write: ${item.id}, reason: ${t.message}")
+    }
+  }
+
+  @Bean
   fun offenceStep(): Step = StepBuilder("offenceStep", jobRepository)
     .chunk<OffenceQueryResult, Offence>(batchProperties.chunkSize, transactionManager)
-    .reader(reader())
+    .reader(reader(null, null))
     .processor(processor())
     .writer(writer())
+    .listener(skipListener())
     .build()
 
   @Bean

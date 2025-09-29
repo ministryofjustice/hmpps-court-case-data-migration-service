@@ -1,13 +1,16 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.batch.item.ItemProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.JudicialResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Plea
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Verdict
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.JudicialResult as TargetJudicialResult
 
 class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
 
@@ -22,6 +25,7 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
 
     val plea = if (offenceQueryResult.pleaId != null) buildPleaAsJSONBString(offenceQueryResult.pleaId, offenceQueryResult) else null
     val verdict = if (offenceQueryResult.verdictId != null) buildVerdictAsJSONBString(offenceQueryResult.verdictId, offenceQueryResult) else null
+    val judicialResultsAsJson = buildJudicialResultAsJSONBString(offenceQueryResult)
 
     val offence = Offence(
       id = offenceQueryResult.id,
@@ -33,7 +37,7 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
       facts = null,
       isDiscontinued = false,
       shortTermCustodyPredictorScore = offenceQueryResult.shortTeamCustodyPredictorScore,
-      judicialResult = null,
+      judicialResults = judicialResultsAsJson,
       plea = plea,
       verdict = verdict,
       createdAt = offenceQueryResult.created,
@@ -45,6 +49,29 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
     )
 
     return offence
+  }
+
+  private fun buildJudicialResultAsJSONBString(offenceQueryResult: OffenceQueryResult): String? {
+    val judicialResults: List<TargetJudicialResult>? = offenceQueryResult.judicialResults?.let { json ->
+      val results: List<JudicialResult> = objectMapper.readValue(json)
+      results.map { result ->
+        TargetJudicialResult(
+          id = result.id,
+          label = result.label,
+          isConvictedResult = result.isConvictedResult,
+          resultTypeId = result.judicialResultTypeId,
+          isJudicialResultDeleted = null, // TODO check where this data comes from
+          resultText = result.resultText,
+          createdAt = result.created,
+          createdBy = result.createdBy,
+          updatedAt = result.lastUpdated,
+          updatedBy = result.lastUpdatedBy,
+          isDeleted = result.deleted,
+          version = result.version,
+        )
+      }
+    }
+    return if (judicialResults != null) objectMapper.writeValueAsString(judicialResults) else null
   }
 
   private fun buildVerdictAsJSONBString(
