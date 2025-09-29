@@ -12,7 +12,7 @@ data class Offence(
   val facts: String?,
   val isDiscontinued: Boolean?,
   val shortTermCustodyPredictorScore: Int?,
-  val judicialResult: String?,
+  val judicialResults: String?,
   val plea: String?,
   val verdict: String?,
   val createdAt: Timestamp?,

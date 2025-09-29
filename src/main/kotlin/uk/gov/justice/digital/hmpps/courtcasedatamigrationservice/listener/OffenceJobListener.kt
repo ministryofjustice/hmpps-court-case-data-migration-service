@@ -16,7 +16,7 @@ class OffenceJobListener(
   private val log = LoggerFactory.getLogger(OffenceJobListener::class.java)
 
   override fun afterJob(jobExecution: JobExecution) {
-    val sourceCount = sourceJdbcTemplate.queryForObject("SELECT COUNT(*) FROM courtcaseservice.offence", Int::class.java)
+    val sourceCount = sourceJdbcTemplate.queryForObject("SELECT COUNT(*) from courtcaseservice.offence o left join courtcaseservice.plea p on (o.plea_id = p.id) left join courtcaseservice.verdict v on (o.verdict_id = v.id)", Int::class.java)
     val targetCount = targetJdbcTemplate.queryForObject("SELECT COUNT(*) FROM hmpps_court_case_service.offence", Int::class.java)
 
     log.info("Source row count: $sourceCount")
