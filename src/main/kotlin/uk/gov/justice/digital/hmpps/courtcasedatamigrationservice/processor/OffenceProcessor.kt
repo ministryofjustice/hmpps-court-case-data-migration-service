@@ -59,14 +59,15 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
           id = result.id,
           label = result.label,
           isConvictedResult = result.isConvictedResult,
+          resultTypeId = result.judicialResultTypeId,
+          isJudicialResultDeleted = null, // TODO check where this data comes from
+          resultText = result.resultText,
           createdAt = result.created,
           createdBy = result.createdBy,
           updatedAt = result.lastUpdated,
           updatedBy = result.lastUpdatedBy,
           isDeleted = result.deleted,
           version = result.version,
-          resultTypeId = null,
-          isJudicialResultDeleted = null,
         )
       }
     }

@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 data class JudicialResult(
   val id: Int,
   val isConvictedResult: Boolean?,
+  val judicialResultTypeId: String?,
+  val resultText: String?,
   val label: String?,
   val created: String?,
   val createdBy: String?,

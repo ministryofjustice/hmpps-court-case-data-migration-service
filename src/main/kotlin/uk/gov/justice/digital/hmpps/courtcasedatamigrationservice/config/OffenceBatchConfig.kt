@@ -68,7 +68,9 @@ class OffenceBatchConfig(
         SELECT json_agg(json_build_object(
             'id', jr.id,
             'is_convicted_result', jr.is_convicted_result,
+            'judicial_result_type_id', jr.judicial_result_type_id,
             'label', jr.label,
+            'result_text', jr.result_text,
             'created', jr.created,
             'created_by', jr.created_by,
             'last_updated', jr.last_updated,
