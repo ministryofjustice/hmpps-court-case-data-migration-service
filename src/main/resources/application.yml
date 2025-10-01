@@ -72,4 +72,4 @@ management:
         time-to-live: 2000ms
 
 batch:
-  chunk-size: 10000
+  chunk-size: 1000
