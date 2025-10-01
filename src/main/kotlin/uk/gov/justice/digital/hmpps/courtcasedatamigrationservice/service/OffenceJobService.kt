@@ -35,11 +35,11 @@ class OffenceJobService(
     log.info("Max ID: $maxId")
 
     val total = maxId - minId + 1
-    val chunkSize = total / 10
+    val chunkSize = total / 20
 
-    for (i in 0 until 10) {
+    for (i in 0 until 20) {
       val chunkMin = minId + (i * chunkSize)
-      val chunkMax = if (i == 9) maxId else chunkMin + chunkSize - 1
+      val chunkMax = if (i == 19) maxId else chunkMin + chunkSize - 1
 
       val params = JobParametersBuilder()
         .addString("run.id", "${Instant.now()}-$i")
