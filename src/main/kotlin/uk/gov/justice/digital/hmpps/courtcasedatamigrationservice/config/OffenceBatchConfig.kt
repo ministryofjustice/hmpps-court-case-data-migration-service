@@ -137,8 +137,8 @@ WHERE o.id BETWEEN $minId AND $maxId
   fun writer(): JdbcBatchItemWriter<Offence> = JdbcBatchItemWriterBuilder<Offence>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.offence (id, code, title, act, list_number, sequence, facts, is_discontinued, short_term_custody_predictor_score, plea, verdict, judicial_results, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :code, :title, :act, :list_number, :sequence, :facts, :isDiscontinued, :shortTermCustodyPredictorScore, CAST(:plea AS jsonb), CAST(:verdict AS jsonb), CAST(:judicialResults AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.offence (id, code, title, legislation, listing_number, sequence, short_term_custody_predictor_score, plea, verdict, judicial_results, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :code, :title, :legislation, :listingNumber, :sequence, :shortTermCustodyPredictorScore, CAST(:plea AS jsonb), CAST(:verdict AS jsonb), CAST(:judicialResults AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
