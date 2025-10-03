@@ -40,11 +40,11 @@ class JobService(
     }
 
     val total = maxId - minId + 1
-    val chunkSize = total / batchSize
 
+    val rangeSize = total.toDouble() / batchSize
     for (i in 0 until batchSize) {
-      val chunkMin = minId + (i * chunkSize)
-      val chunkMax = if (i == batchSize - 1) maxId else chunkMin + chunkSize - 1
+      val chunkMin = (minId + i * rangeSize).toInt()
+      val chunkMax = if (i == batchSize - 1) maxId else (minId + (i + 1) * rangeSize).toInt() - 1
 
       val params = JobParametersBuilder()
         .addString("run.id", "${Instant.now()}-$i")
@@ -53,9 +53,10 @@ class JobService(
         .toJobParameters()
 
       jobLauncher.run(job, params)
+
+      afterJob()
     }
 
-    afterJob()
     ResponseEntity.ok("$jobName Job Completed. Check logs.")
   } catch (ex: Exception) {
     ResponseEntity.internalServerError().body("$jobName Job failed to start: ${ex.message}")

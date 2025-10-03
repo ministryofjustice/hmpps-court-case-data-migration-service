@@ -23,6 +23,6 @@ class TimerJobListener : JobExecutionListener {
     val endTime = Instant.now()
     log.info("Job ended at: $endTime")
     val duration = Duration.between(startTime, endTime)
-    log.info("Total job duration: ${duration.toMinutes()} minutes and ${duration.seconds % 60} seconds")
+    log.info("Job duration: ${duration.toMinutes()} minutes and ${duration.seconds % 60} seconds")
   }
 }
