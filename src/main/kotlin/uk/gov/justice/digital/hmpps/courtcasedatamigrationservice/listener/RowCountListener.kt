@@ -5,19 +5,19 @@ import org.springframework.batch.core.JobExecution
 import org.springframework.batch.core.JobExecutionListener
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.stereotype.Component
 
-@Component
-class OffenceJobListener(
+class RowCountListener(
   @Qualifier("sourceJdbcTemplate") private val sourceJdbcTemplate: JdbcTemplate,
   @Qualifier("targetJdbcTemplate") private val targetJdbcTemplate: JdbcTemplate,
+  private val sourceRowCountQuery: String,
+  private val targetRowCountQuery: String,
 ) : JobExecutionListener {
 
-  private val log = LoggerFactory.getLogger(OffenceJobListener::class.java)
+  private val log = LoggerFactory.getLogger(RowCountListener::class.java)
 
   override fun afterJob(jobExecution: JobExecution) {
-    val sourceCount = sourceJdbcTemplate.queryForObject("SELECT COUNT(*) from courtcaseservice.offence o left join courtcaseservice.plea p on (o.plea_id = p.id) left join courtcaseservice.verdict v on (o.verdict_id = v.id)", Int::class.java)
-    val targetCount = targetJdbcTemplate.queryForObject("SELECT COUNT(*) FROM hmpps_court_case_service.offence", Int::class.java)
+    val sourceCount = sourceJdbcTemplate.queryForObject(this.sourceRowCountQuery, Int::class.java)
+    val targetCount = targetJdbcTemplate.queryForObject(this.targetRowCountQuery, Int::class.java)
 
     log.info("Source row count: $sourceCount")
     log.info("Target row count: $targetCount")

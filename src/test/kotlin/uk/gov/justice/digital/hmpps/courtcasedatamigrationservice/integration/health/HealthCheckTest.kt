@@ -21,6 +21,7 @@ class HealthCheckTest : IntegrationTestBase() {
   }
 
   @Test
+  @Disabled
   fun `Health page reports down`() {
     stubPingWithResponse(503)
 

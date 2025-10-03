@@ -7,6 +7,7 @@ import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing
 import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.batch.core.job.builder.JobBuilder
+import org.springframework.batch.core.launch.JobLauncher
 import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
@@ -17,16 +18,21 @@ import org.springframework.batch.item.database.JdbcCursorItemReader
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder
 import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.OffenceJobListener
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.OffenceProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import javax.sql.DataSource
 
 @Configuration
@@ -41,9 +47,16 @@ class OffenceBatchConfig(
 
   private val log = LoggerFactory.getLogger(OffenceBatchConfig::class.java)
 
+  @Autowired
+  lateinit var jobLauncher: JobLauncher
+
+  @Autowired
+  @Qualifier("sourceJdbcTemplate")
+  lateinit var sourceJdbcTemplate: JdbcTemplate
+
   @Bean
   @StepScope
-  fun reader(
+  fun offenceReader(
     @Value("#{jobParameters['minId']}") minId: Long?,
     @Value("#{jobParameters['maxId']}") maxId: Long?,
   ): JdbcCursorItemReader<OffenceQueryResult> = JdbcCursorItemReaderBuilder<OffenceQueryResult>()
@@ -129,12 +142,12 @@ WHERE o.id BETWEEN $minId AND $maxId
     .build()
 
   @Bean
-  fun processor(): ItemProcessor<OffenceQueryResult, Offence> = CompositeItemProcessorBuilder<OffenceQueryResult, Offence>()
+  fun offenceProcessor(): ItemProcessor<OffenceQueryResult, Offence> = CompositeItemProcessorBuilder<OffenceQueryResult, Offence>()
     .delegates(listOf(OffenceProcessor()))
     .build()
 
   @Bean
-  fun writer(): JdbcBatchItemWriter<Offence> = JdbcBatchItemWriterBuilder<Offence>()
+  fun offenceWriter(): JdbcBatchItemWriter<Offence> = JdbcBatchItemWriterBuilder<Offence>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
       """INSERT INTO hmpps_court_case_service.offence (id, code, title, legislation, listing_number, sequence, short_term_custody_predictor_score, plea, verdict, judicial_results, created_at, created_by, updated_at, updated_by, is_deleted, version)
@@ -144,7 +157,7 @@ WHERE o.id BETWEEN $minId AND $maxId
     .build()
 
   @Bean
-  fun skipListener() = object : SkipListener<OffenceQueryResult, Offence> {
+  fun offenceSkipListener() = object : SkipListener<OffenceQueryResult, Offence> {
     override fun onSkipInRead(t: Throwable) {
       log.warn("Skipped during read: ${t.message}")
     }
@@ -161,17 +174,39 @@ WHERE o.id BETWEEN $minId AND $maxId
   @Bean
   fun offenceStep(): Step = StepBuilder("offenceStep", jobRepository)
     .chunk<OffenceQueryResult, Offence>(batchProperties.chunkSize, transactionManager)
-    .reader(reader(null, null))
-    .processor(processor())
-    .writer(writer())
-    .listener(skipListener())
+    .reader(offenceReader(null, null))
+    .processor(offenceProcessor())
+    .writer(offenceWriter())
+    .listener(offenceSkipListener())
     .build()
 
   @Bean
-  fun job(timerJobListener: TimerJobListener, offenceJobListener: OffenceJobListener): Job = JobBuilder("offenceJob", jobRepository)
+  fun offenceRowCountListener(): RowCountListener = RowCountListener(
+    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+    targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    sourceRowCountQuery = "SELECT COUNT(*) from courtcaseservice.offence o left join courtcaseservice.plea p on (o.plea_id = p.id) left join courtcaseservice.verdict v on (o.verdict_id = v.id)",
+    targetRowCountQuery = "SELECT COUNT(*) FROM hmpps_court_case_service.offence o",
+  )
+
+  @Bean
+  fun offenceJob(timerJobListener: TimerJobListener): Job = JobBuilder("offenceJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
-    .listener(offenceJobListener)
+    .listener(offenceRowCountListener())
     .start(offenceStep())
     .build()
+
+  @Bean(name = ["offenceJobService"])
+  fun offenceJobService(@Qualifier("offenceJob") offenceJob: Job): JobService = JobService(
+    jobLauncher = jobLauncher,
+    job = offenceJob,
+    sourceJdbcTemplate = sourceJdbcTemplate,
+    batchSize = 10,
+    minQuery = "SELECT MIN(id) FROM courtcaseservice.offence",
+    maxQuery = "SELECT MAX(id) FROM courtcaseservice.offence",
+    jobName = "Offence",
+  )
+
+  @Bean
+  fun offenceJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(jobService = offenceJobService(offenceJob(timerJobListener)), dataSource = dataSource, jobType = JobType.OFFENCE)
 }
