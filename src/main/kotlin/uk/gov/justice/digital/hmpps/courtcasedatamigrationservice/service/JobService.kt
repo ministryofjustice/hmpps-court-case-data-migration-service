@@ -29,11 +29,15 @@ class JobService(
   fun runJob(): ResponseEntity<String> = try {
     beforeJob()
 
-    val minId = sourceJdbcTemplate.queryForObject(minQuery, Int::class.java)
-    val maxId = sourceJdbcTemplate.queryForObject(maxQuery, Int::class.java)
+    val minId = sourceJdbcTemplate.queryForObject(this.minQuery, Int::class.java)
+    val maxId = sourceJdbcTemplate.queryForObject(this.maxQuery, Int::class.java)
 
     log.info("Min ID: $minId")
     log.info("Max ID: $maxId")
+
+    if (minId == null || maxId == null) {
+      throw IllegalArgumentException("MinId and MaxId must be provided")
+    }
 
     val total = maxId - minId + 1
     val chunkSize = total / batchSize
