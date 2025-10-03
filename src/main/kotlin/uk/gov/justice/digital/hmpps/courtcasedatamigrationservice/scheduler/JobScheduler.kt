@@ -28,7 +28,7 @@ class JobScheduler(
       Boolean::class.java,
       jobType.name,
     )
-    if (isEnabled) {
+    if (isEnabled != null && isEnabled) {
       log.info("$jobType job enabled: $isEnabled. Starting scheduled Job.")
       jobService.runJob()
     } else {
