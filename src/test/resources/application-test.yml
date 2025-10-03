@@ -1,12 +1,12 @@
+nomis-oauth:
+  base-url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
+
 server:
   shutdown: immediate
 
 management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
-
-nomis-oauth:
-  base-url: http://localhost:8090/auth
 
 database:
   batch:
@@ -38,6 +38,16 @@ spring:
       enabled: false
   flyway:
     enabled: false
+  security:
+    oauth2:
+      client:
+        provider:
+          nomis-oauth-service:
+            token-uri: ${nomis-oauth.base-url}/oauth/token
+      resourceserver:
+        jwt:
+          issuer-uri: ${nomis-oauth.issuer-base-url:${nomis-oauth.base-url}}/issuer
+          jwk-set-uri: ${nomis-oauth.base-url}/.well-known/jwks.json
 
 app:
   datasource:
