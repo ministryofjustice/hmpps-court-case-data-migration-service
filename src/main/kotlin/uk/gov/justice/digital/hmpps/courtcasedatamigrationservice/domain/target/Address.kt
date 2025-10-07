@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 import java.sql.Timestamp
 
 data class Address(
-  val id: Integer,
+  val id: Int,
   val address1: String?,
   val address2: String?,
   val address3: String?,
@@ -12,8 +12,8 @@ data class Address(
   val postcode: String?,
   val createdAt: Timestamp?,
   val createdBy: String?,
-  val lastUpdatedAt: Timestamp?,
-  val lastUpdatedBy: String?,
+  val updatedAt: Timestamp?,
+  val updatedBy: String?,
   val isDeleted: Boolean?,
   val version: Int?,
 )

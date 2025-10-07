@@ -4,16 +4,11 @@ import java.sql.Timestamp
 
 data class Defendant(
   val id: Int,
-  val masterDefendantId: Int?,
-  val numberOfPreviousConvictionsCited: String?,
   val isManualUpdate: Boolean?,
-  val mitigation: String?,
   val crn: String?,
   val croNumber: String?,
-  val isYouth: Boolean?,
   val tsvName: String?,
-  val pncId: Int?,
-  val isProceedingsConcluded: Boolean?,
+  val pncId: String?,
   val cprUuid: String?,
   val isOffenderConfirmed: Boolean?,
   val person: String?,

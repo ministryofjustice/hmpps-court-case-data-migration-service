@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.Timer
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
+import java.time.LocalDate
 import javax.sql.DataSource
 
 @Configuration
@@ -60,7 +61,7 @@ class DefendantBatchConfig(
     .dataSource(sourceDataSource)
     .sql(
       """
-        SELECT d.id
+        SELECT d.id, d.manual_update, d.crn, d.cro, d.name, d.date_of_birth, d.offender_confirmed, d.nationality_1, d.nationality_2, d.sex, d.phone_number, d.address, d.tsv_name, d.pnc, d.cpr_uuid, d.created, d.created_by, d.last_updated, d.last_updated_by, d.deleted, d.version
 FROM courtcaseservice.defendant d
 WHERE d.id BETWEEN $minId AND $maxId
       """.trimMargin(),
@@ -68,6 +69,26 @@ WHERE d.id BETWEEN $minId AND $maxId
     .rowMapper { rs, _ ->
       DefendantQueryResult(
         id = rs.getInt("id"),
+        isManualUpdate = rs.getBoolean("manual_update"),
+        crn = rs.getString("crn"),
+        cro = rs.getString("cro"),
+        name = rs.getString("name"),
+        dateOfBirth = rs.getObject("date_of_birth", LocalDate::class.java),
+        offenderConfirmed = rs.getBoolean("offender_confirmed"),
+        nationality1 = rs.getString("nationality_1"),
+        nationality2 = rs.getString("nationality_2"),
+        sex = rs.getString("sex"),
+        phoneNumber = rs.getString("phone_number"),
+        address = rs.getString("address"),
+        tsvName = rs.getString("tsv_name"),
+        pnc = rs.getString("pnc"),
+        cpr_uuid = rs.getString("cpr_uuid"),
+        created = rs.getTimestamp("created"),
+        createdBy = rs.getString("created_by"),
+        lastUpdated = rs.getTimestamp("last_updated"),
+        lastUpdatedBy = rs.getString("last_updated_by"),
+        deleted = rs.getBoolean("deleted"),
+        version = rs.getInt("version"),
       )
     }
     .build()
@@ -81,8 +102,8 @@ WHERE d.id BETWEEN $minId AND $maxId
   fun defendantWriter(): JdbcBatchItemWriter<Defendant> = JdbcBatchItemWriterBuilder<Defendant>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.defendant (id, master_defendant_id, is_manual_update, crn, cro_number, is_youth, tsv_name, pnc_id, is_proceedings_concluded, cpr_uuid, is_offender_confirmed, person, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :masterDefendantId, :isManualUpdate, :crn, :croNumber, :isYouth, :tsvName, :pncId, :isProceedingsConcluded, :cprUuid, :isOffenderConfirmed, CAST(:person AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.defendant (id, is_manual_update, crn, cro_number, tsv_name, pnc_id, cpr_uuid, is_offender_confirmed, person, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :isManualUpdate, :crn, :croNumber, to_tsvector(:tsvName), :pncId, :cprUuid, :isOffenderConfirmed, CAST(:person AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -132,7 +153,7 @@ WHERE d.id BETWEEN $minId AND $maxId
     jobLauncher = jobLauncher,
     job = defendantJob,
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
-    batchSize = 10,
+    batchSize = 1,
     minQuery = "SELECT MIN(id) FROM courtcaseservice.defendant",
     maxQuery = "SELECT MAX(id) FROM courtcaseservice.defendant",
     jobName = "Defendant",
