@@ -140,15 +140,7 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
     )
   }
 
-  private fun buildSexObject(defendantQueryResult: DefendantQueryResult): Sex? {
-    defendantQueryResult.sex?.let {
-      try {
-        return Sex(it, null) // TODO should the sex object have an id with the created etc fields too?
-      } catch (ex: Exception) {
-        log.warn("Failed to deserialize sex for defendant ID: ${defendantQueryResult.id}", ex)
-        null
-      }
-    }
-    return null
+  private fun buildSexObject(defendantQueryResult: DefendantQueryResult): Sex? = defendantQueryResult.sex?.let {
+    Sex(it, null)
   }
 }
