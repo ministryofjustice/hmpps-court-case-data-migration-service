@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
 import java.time.Duration
 import java.time.Instant
+import java.util.*
 
 class JobService(
   private val jobLauncher: JobLauncher,
@@ -29,49 +30,62 @@ class JobService(
   fun runJob(): ResponseEntity<String> = try {
     beforeJob()
 
-    val minId = sourceJdbcTemplate.queryForObject(this.minQuery, Int::class.java)
-    val maxId = sourceJdbcTemplate.queryForObject(this.maxQuery, Int::class.java)
+    val minId = sourceJdbcTemplate.queryForObject(minQuery, Long::class.java)
+    val maxId = sourceJdbcTemplate.queryForObject(maxQuery, Long::class.java)
 
-    log.info("Min ID: $minId")
-    log.info("Max ID: $maxId")
+    log.info("Retrieved min ID: $minId")
+    log.info("Retrieved max ID: $maxId")
 
     if (minId == null || maxId == null) {
-      throw IllegalArgumentException("MinId and MaxId must be provided")
+      throw IllegalArgumentException("MinId and MaxId must be provided and non-null")
+    }
+    if (batchSize <= 0) {
+      throw IllegalArgumentException("Batch size must be greater than 0")
     }
 
     val total = maxId - minId + 1
+    if (total <= 0) {
+      throw IllegalStateException("Invalid ID range: minId=$minId, maxId=$maxId")
+    }
 
-    val rangeSize = total.toDouble() / batchSize
+    val baseChunkSize = total / batchSize
+    val remainder = total % batchSize
+
+    var currentMin = minId
     for (i in 0 until batchSize) {
-      val chunkMin = (minId + i * rangeSize).toInt()
-      val chunkMax = if (i == batchSize - 1) maxId else (minId + (i + 1) * rangeSize).toInt() - 1
+      val extra = if (i < remainder) 1 else 0
+      val chunkSize = baseChunkSize + extra
+      val chunkMax = currentMin + chunkSize - 1
+
+      log.info("Launching job chunk $i with range: [$currentMin to $chunkMax]")
 
       val params = JobParametersBuilder()
-        .addString("run.id", "${Instant.now()}-$i")
-        .addLong("minId", chunkMin.toLong())
-        .addLong("maxId", chunkMax.toLong())
+        .addString("run.id", UUID.randomUUID().toString())
+        .addLong("minId", currentMin)
+        .addLong("maxId", chunkMax)
         .toJobParameters()
 
       jobLauncher.run(job, params)
 
-      afterJob()
+      currentMin = chunkMax + 1
     }
 
-    ResponseEntity.ok("$jobName Job Completed. Check logs.")
+    afterJob()
+    ResponseEntity.ok("$jobName job completed. Check logs for details.")
   } catch (ex: Exception) {
-    ResponseEntity.internalServerError().body("$jobName Job failed to start: ${ex.message}")
+    log.error("Error running $jobName job", ex)
+    ResponseEntity.internalServerError().body("$jobName job failed: ${ex.message}")
   }
 
-  fun beforeJob() {
-    log.info("Starting job")
+  private fun beforeJob() {
     startTime = Instant.now()
-    log.info("Job started at: $startTime")
+    log.info("Starting $jobName job at $startTime")
   }
 
-  fun afterJob() {
+  private fun afterJob() {
     val endTime = Instant.now()
-    log.info("Job ended at: $endTime")
     val duration = Duration.between(startTime, endTime)
-    log.info("Total job duration: ${duration.toMinutes()} minutes and ${duration.seconds % 60} seconds")
+    log.info("Finished $jobName job at $endTime")
+    log.info("Total duration: ${duration.toMinutes()} minutes and ${duration.seconds % 60} seconds")
   }
 }

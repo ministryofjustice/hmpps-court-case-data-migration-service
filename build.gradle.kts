@@ -24,6 +24,9 @@ dependencies {
   testImplementation("io.swagger.parser.v3:swagger-parser:2.1.32") {
     exclude(group = "io.swagger.core.v3")
   }
+  testImplementation("org.mockito:mockito-core")
+  testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.0")
+  testImplementation("io.github.hakky54:logcaptor:2.12.1")
 }
 
 kotlin {

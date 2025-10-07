@@ -4,9 +4,9 @@ import java.sql.Timestamp
 
 data class ContactInformation(
   val id: Int,
-  val homeNumber: Int?,
-  val workNumber: Int?,
-  val mobileNumber: Int?,
+  val homeNumber: String?,
+  val workNumber: String?,
+  val mobileNumber: String?,
   val primaryEmail: String?,
   val secondaryEmail: String?,
   val fax: Int?,
