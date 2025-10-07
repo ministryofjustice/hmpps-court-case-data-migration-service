@@ -6,7 +6,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.MockedConstruction
 import org.mockito.Mockito.mockConstruction
-import org.mockito.kotlin.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
@@ -40,7 +45,7 @@ class JobSchedulerTest {
     }
 
     jobScheduler = JobScheduler(jobService, dataSource, jobType)
-    jobScheduler.runJob() // returns Unit
+    jobScheduler.runJob()
 
     verify(jobService).runJob()
   }
@@ -52,7 +57,7 @@ class JobSchedulerTest {
     }
 
     jobScheduler = JobScheduler(jobService, dataSource, jobType)
-    jobScheduler.runJob() // returns Unit
+    jobScheduler.runJob()
 
     verify(jobService, never()).runJob()
   }

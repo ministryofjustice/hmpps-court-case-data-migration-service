@@ -55,7 +55,7 @@ class JobService(
     for (i in 0 until batchSize) {
       val extra = if (i < remainder) 1 else 0
       val chunkSize = baseChunkSize + extra
-      val chunkMax = currentMin + chunkSize - 1
+      val chunkMax = currentMin!! + chunkSize - 1
 
       log.info("Launching job chunk $i with range: [$currentMin to $chunkMax]")
 
