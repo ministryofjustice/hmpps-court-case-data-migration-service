@@ -28,6 +28,7 @@ import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.DefendantPostMigrationValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantProcessor
@@ -140,11 +141,19 @@ WHERE d.id BETWEEN $minId AND $maxId
     targetRowCountQuery = "SELECT COUNT(*) FROM hmpps_court_case_service.defendant d",
   )
 
+  fun defendantPostMigrationValidator(): DefendantPostMigrationValidator = DefendantPostMigrationValidator(
+    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+    targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    minQuery = "SELECT MIN(id) FROM courtcaseservice.defendant",
+    maxQuery = "SELECT MAX(id) FROM courtcaseservice.defendant",
+  )
+
   @Bean
   fun defendantJob(timerJobListener: TimerJobListener): Job = JobBuilder("defendantJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
     .listener(defendantRowCountListener())
+    .listener(defendantPostMigrationValidator())
     .start(defendantStep())
     .build()
 
