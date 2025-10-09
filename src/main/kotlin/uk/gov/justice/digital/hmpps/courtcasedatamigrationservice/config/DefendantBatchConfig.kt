@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
-import org.springframework.batch.core.JobExecutionListener
 import org.springframework.batch.core.SkipListener
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing

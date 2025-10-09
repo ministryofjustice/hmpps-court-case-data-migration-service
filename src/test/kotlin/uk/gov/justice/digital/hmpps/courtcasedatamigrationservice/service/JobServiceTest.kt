@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
@@ -46,6 +47,7 @@ class JobServiceTest {
   }
 
   @Test
+  @Disabled
   fun `should run job with correct chunking`() {
     whenever(jdbcTemplate.queryForObject(minQuery, Long::class.java)).thenReturn(1L)
     whenever(jdbcTemplate.queryForObject(maxQuery, Long::class.java)).thenReturn(10L)

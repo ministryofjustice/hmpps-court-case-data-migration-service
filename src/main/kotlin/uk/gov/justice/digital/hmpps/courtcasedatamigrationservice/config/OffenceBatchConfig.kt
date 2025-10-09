@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
-import org.springframework.batch.core.JobExecutionListener
 import org.springframework.batch.core.SkipListener
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing
@@ -35,7 +34,6 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.Timer
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.OffenceProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantValidationStrategy
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.OffenceValidationStrategy
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
 import javax.sql.DataSource
