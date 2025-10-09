@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
+import org.springframework.batch.core.JobExecutionListener
 import org.springframework.batch.core.SkipListener
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing
@@ -11,6 +12,7 @@ import org.springframework.batch.core.launch.JobLauncher
 import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
+import org.springframework.batch.core.step.tasklet.Tasklet
 import org.springframework.batch.item.ItemProcessor
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider
 import org.springframework.batch.item.database.JdbcBatchItemWriter
@@ -33,6 +35,9 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.Timer
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.OffenceProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantValidationStrategy
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.OffenceValidationStrategy
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
 import javax.sql.DataSource
 
 @Configuration
@@ -53,6 +58,13 @@ class OffenceBatchConfig(
   @Autowired
   @Qualifier("sourceJdbcTemplate")
   lateinit var sourceJdbcTemplate: JdbcTemplate
+
+  companion object {
+    const val MIN_QUERY = "SELECT MIN(id) FROM courtcaseservice.offence"
+    const val MAX_QUERY = "SELECT MAX(id) FROM courtcaseservice.offence"
+    const val SOURCE_ROW_COUNT_QUERY = "SELECT COUNT(*) from courtcaseservice.offence o left join courtcaseservice.plea p on (o.plea_id = p.id) left join courtcaseservice.verdict v on (o.verdict_id = v.id)"
+    const val TARGET_ROW_COUNT_QUERY = "SELECT COUNT(*) FROM hmpps_court_case_service.offence o"
+  }
 
   @Bean
   @StepScope
@@ -184,9 +196,21 @@ WHERE o.id BETWEEN $minId AND $maxId
   fun offenceRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = "SELECT COUNT(*) from courtcaseservice.offence o left join courtcaseservice.plea p on (o.plea_id = p.id) left join courtcaseservice.verdict v on (o.verdict_id = v.id)",
-    targetRowCountQuery = "SELECT COUNT(*) FROM hmpps_court_case_service.offence o",
+    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
+
+  fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
+    .tasklet(validationTasklet(), transactionManager)
+    .build()
+
+  fun validationTasklet(): Tasklet {
+    val strategy = OffenceValidationStrategy(
+      sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+      targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    )
+    return PostMigrationValidator(strategy, 25)
+  }
 
   @Bean
   fun offenceJob(timerJobListener: TimerJobListener): Job = JobBuilder("offenceJob", jobRepository)
@@ -194,6 +218,7 @@ WHERE o.id BETWEEN $minId AND $maxId
     .listener(timerJobListener)
     .listener(offenceRowCountListener())
     .start(offenceStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["offenceJobService"])
@@ -202,8 +227,8 @@ WHERE o.id BETWEEN $minId AND $maxId
     job = offenceJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
     batchSize = 10,
-    minQuery = "SELECT MIN(id) FROM courtcaseservice.offence",
-    maxQuery = "SELECT MAX(id) FROM courtcaseservice.offence",
+    minQuery = MIN_QUERY,
+    maxQuery = MAX_QUERY,
     jobName = "Offence",
   )
 

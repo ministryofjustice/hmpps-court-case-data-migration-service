@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
+import org.springframework.batch.core.JobExecutionListener
 import org.springframework.batch.core.SkipListener
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing
@@ -11,6 +12,7 @@ import org.springframework.batch.core.launch.JobLauncher
 import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
+import org.springframework.batch.core.step.tasklet.Tasklet
 import org.springframework.batch.item.ItemProcessor
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider
 import org.springframework.batch.item.database.JdbcBatchItemWriter
@@ -28,12 +30,13 @@ import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.DefendantPostMigrationValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantValidationStrategy
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
 import java.time.LocalDate
 import javax.sql.DataSource
 
@@ -51,6 +54,13 @@ class DefendantBatchConfig(
 
   @Autowired
   lateinit var jobLauncher: JobLauncher
+
+  companion object {
+    const val MIN_QUERY = "SELECT MIN(id) FROM courtcaseservice.defendant"
+    const val MAX_QUERY = "SELECT MAX(id) FROM courtcaseservice.defendant"
+    const val SOURCE_ROW_COUNT_QUERY = "SELECT COUNT(*) FROM courtcaseservice.defendant d"
+    const val TARGET_ROW_COUNT_QUERY = "SELECT COUNT(*) FROM hmpps_court_case_service.defendant d"
+  }
 
   @Bean
   @StepScope
@@ -137,24 +147,29 @@ WHERE d.id BETWEEN $minId AND $maxId
   fun defendantRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = "SELECT COUNT(*) FROM courtcaseservice.defendant d",
-    targetRowCountQuery = "SELECT COUNT(*) FROM hmpps_court_case_service.defendant d",
+    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
 
-  fun defendantPostMigrationValidator(): DefendantPostMigrationValidator = DefendantPostMigrationValidator(
-    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
-    targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    minQuery = "SELECT MIN(id) FROM courtcaseservice.defendant",
-    maxQuery = "SELECT MAX(id) FROM courtcaseservice.defendant",
-  )
+  fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
+    .tasklet(validationTasklet(), transactionManager)
+    .build()
+
+  fun validationTasklet(): Tasklet {
+    val strategy = DefendantValidationStrategy(
+      sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+      targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    )
+    return PostMigrationValidator(strategy, 25)
+  }
 
   @Bean
   fun defendantJob(timerJobListener: TimerJobListener): Job = JobBuilder("defendantJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
     .listener(defendantRowCountListener())
-    .listener(defendantPostMigrationValidator())
     .start(defendantStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["defendantJobService"])
@@ -162,9 +177,9 @@ WHERE d.id BETWEEN $minId AND $maxId
     jobLauncher = jobLauncher,
     job = defendantJob,
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
-    batchSize = 1,
-    minQuery = "SELECT MIN(id) FROM courtcaseservice.defendant",
-    maxQuery = "SELECT MAX(id) FROM courtcaseservice.defendant",
+    batchSize = 10,
+    minQuery = MIN_QUERY,
+    maxQuery = MAX_QUERY,
     jobName = "Defendant",
   )
 
