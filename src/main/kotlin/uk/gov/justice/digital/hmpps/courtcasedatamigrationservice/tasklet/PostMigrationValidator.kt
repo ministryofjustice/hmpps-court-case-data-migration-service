@@ -5,10 +5,9 @@ import org.springframework.batch.core.StepContribution
 import org.springframework.batch.core.scope.context.ChunkContext
 import org.springframework.batch.core.step.tasklet.Tasklet
 import org.springframework.batch.repeat.RepeatStatus
-import kotlin.random.Random
 
 class PostMigrationValidator(
-  private val strategy: PostMigrationValidationStrategy,
+  private val validator: Validator,
   private val sampleSize: Int = 10,
 ) : Tasklet {
 
@@ -20,7 +19,7 @@ class PostMigrationValidator(
   ): RepeatStatus = validateSample(chunkContext.stepContext.jobParameters)
 
   fun validateSample(jobParameters: Map<String, Any>): RepeatStatus {
-    log.info("Validating sample size {}", sampleSize)
+    log.info("Validating sample IDs from source data")
 
     val minId = jobParameters["minId"] as? Long
     val maxId = jobParameters["maxId"] as? Long
@@ -29,34 +28,23 @@ class PostMigrationValidator(
       throw RuntimeException("Invalid ID range. Stopping further job executions.")
     }
 
-    val presentSourceIds = mutableListOf<Long>()
-    val attemptedIds = mutableSetOf<Long>()
+    val sampleSourceIDs = validator.fetchSourceIDs(minId, maxId, sampleSize)
 
-    while (presentSourceIds.size < sampleSize && attemptedIds.size < (maxId - minId)) {
-      val id = Random.nextLong(minId, maxId + 1)
-      if (id in attemptedIds) continue
-      attemptedIds.add(id)
-
-      val source = strategy.fetchSourceRecord(id)
-      if (source != null) {
-        presentSourceIds.add(id)
-      }
-    }
-
-    log.info("Validating Sample Source IDs: {}", presentSourceIds.joinToString(", "))
+    log.info("Sample size: {}", sampleSourceIDs.size)
+    log.info("Sample source IDs: {}", sampleSourceIDs.joinToString(", "))
 
     val errors = mutableListOf<String>()
 
-    presentSourceIds.forEach { id ->
-      val source = strategy.fetchSourceRecord(id)
-      val target = strategy.fetchTargetRecord(id)
+    sampleSourceIDs.forEach { id ->
+      val source = validator.fetchSourceRecord(id)
+      val target = validator.fetchTargetRecord(id)
 
       if (source == null || target == null) {
         errors.add("Missing record for ID $id")
         return@forEach
       }
 
-      errors.addAll(strategy.compareRecords(source, target))
+      errors.addAll(validator.compareRecords(source, target))
     }
 
     if (errors.isEmpty()) {
