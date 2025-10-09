@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.batch.core.BatchStatus
+import org.springframework.batch.core.ExitStatus
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobParametersBuilder
 import org.springframework.batch.core.launch.JobLauncher
@@ -30,8 +32,8 @@ class JobService(
   fun runJob(): ResponseEntity<String> = try {
     beforeJob()
 
-    val minId = sourceJdbcTemplate.queryForObject(minQuery, Long::class.java)
-    val maxId = sourceJdbcTemplate.queryForObject(maxQuery, Long::class.java)
+    val minId = sourceJdbcTemplate.queryForObject(this.minQuery, Long::class.java)
+    val maxId = sourceJdbcTemplate.queryForObject(this.maxQuery, Long::class.java)
 
     log.info("Retrieved min ID: $minId")
     log.info("Retrieved max ID: $maxId")
@@ -65,7 +67,12 @@ class JobService(
         .addLong("maxId", chunkMax)
         .toJobParameters()
 
-      jobLauncher.run(job, params)
+      val jobExecution = jobLauncher.run(job, params)
+
+      if (jobExecution.status == BatchStatus.FAILED || jobExecution.exitStatus.exitCode == ExitStatus.FAILED.exitCode) {
+        log.error("Stopping job chain due to failure.")
+        break
+      }
 
       currentMin = chunkMax + 1
     }
