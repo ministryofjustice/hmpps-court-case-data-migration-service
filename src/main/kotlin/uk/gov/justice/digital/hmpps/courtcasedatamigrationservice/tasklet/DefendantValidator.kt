@@ -2,10 +2,16 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet
 
 import org.springframework.jdbc.core.JdbcTemplate
 
-class DefendantValidationStrategy(
+class DefendantValidator(
   private val sourceJdbcTemplate: JdbcTemplate,
   private val targetJdbcTemplate: JdbcTemplate,
-) : PostMigrationValidationStrategy {
+) : Validator {
+
+  override fun fetchSourceIDs(minId: Long, maxId: Long, sampleSize: Int): List<Long> = sourceJdbcTemplate.queryForList(
+    "SELECT id FROM courtcaseservice.defendant WHERE id BETWEEN ? AND ? ORDER BY RANDOM() LIMIT ?",
+    arrayOf(minId, maxId, sampleSize),
+    Long::class.java,
+  )
 
   override fun fetchSourceRecord(id: Long): Map<String, Any>? = sourceJdbcTemplate.query(
     """

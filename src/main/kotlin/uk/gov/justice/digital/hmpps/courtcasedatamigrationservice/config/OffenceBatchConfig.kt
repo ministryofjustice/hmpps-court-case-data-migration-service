@@ -34,7 +34,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.Timer
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.OffenceProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.OffenceValidationStrategy
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.OffenceValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
 import javax.sql.DataSource
 
@@ -203,11 +203,11 @@ WHERE o.id BETWEEN $minId AND $maxId
     .build()
 
   fun validationTasklet(): Tasklet {
-    val strategy = OffenceValidationStrategy(
+    val strategy = OffenceValidator(
       sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
       targetJdbcTemplate = JdbcTemplate(targetDataSource),
     )
-    return PostMigrationValidator(strategy, 25)
+    return PostMigrationValidator(strategy, 100)
   }
 
   @Bean
@@ -224,7 +224,7 @@ WHERE o.id BETWEEN $minId AND $maxId
     jobLauncher = jobLauncher,
     job = offenceJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
-    batchSize = 10,
+    batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
     jobName = "Offence",

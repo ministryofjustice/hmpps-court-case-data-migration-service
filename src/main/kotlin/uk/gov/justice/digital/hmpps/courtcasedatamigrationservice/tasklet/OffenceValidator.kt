@@ -2,10 +2,16 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet
 
 import org.springframework.jdbc.core.JdbcTemplate
 
-class OffenceValidationStrategy(
+class OffenceValidator(
   private val sourceJdbcTemplate: JdbcTemplate,
   private val targetJdbcTemplate: JdbcTemplate,
-) : PostMigrationValidationStrategy {
+) : Validator {
+
+  override fun fetchSourceIDs(minId: Long, maxId: Long, sampleSize: Int): List<Long> = sourceJdbcTemplate.queryForList(
+    "SELECT id FROM courtcaseservice.offence WHERE id BETWEEN ? AND ? ORDER BY RANDOM() LIMIT ?",
+    arrayOf(minId, maxId, sampleSize),
+    Long::class.java,
+  )
 
   override fun fetchSourceRecord(id: Long): Map<String, Any>? = sourceJdbcTemplate.query(
     """
@@ -53,10 +59,6 @@ class OffenceValidationStrategy(
 
     if (source["act"] != target["legislation"]) {
       errors.add("Act (or Legislation) mismatch for ID $id: '${source["act"]}' vs '${target["legislation"]}'")
-    }
-
-    if (source["act"] != "hello") {
-      errors.add("Act (or Legislation) mismatch for ID $id: '${source["act"]}' vs hello")
     }
 
     return errors
