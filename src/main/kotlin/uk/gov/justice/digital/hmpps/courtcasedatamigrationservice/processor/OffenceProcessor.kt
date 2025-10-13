@@ -21,7 +21,7 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
   private val objectMapper = jacksonObjectMapper()
 
   override fun process(offenceQueryResult: OffenceQueryResult): Offence {
-//    log.info("Processing offence: {}", offenceQueryResult.id)
+    log.info("Processing offence: {}", offenceQueryResult.id)
 
     val plea = if (offenceQueryResult.pleaId != null) buildPleaAsJSONBString(offenceQueryResult.pleaId, offenceQueryResult) else null
     val verdict = if (offenceQueryResult.verdictId != null) buildVerdictAsJSONBString(offenceQueryResult.verdictId, offenceQueryResult) else null
