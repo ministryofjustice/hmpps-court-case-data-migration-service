@@ -72,6 +72,7 @@ class OffenceBatchConfig(
   ): JdbcCursorItemReader<OffenceQueryResult> = JdbcCursorItemReaderBuilder<OffenceQueryResult>()
     .name("offenceReader")
     .dataSource(sourceDataSource)
+    .fetchSize(3000)
     .sql(
       """SELECT
     o.id, o.fk_hearing_defendant_id, o.offence_code, o.summary, o.title, o.sequence, o.act, o.list_no, 
@@ -188,6 +189,9 @@ WHERE o.id BETWEEN $minId AND $maxId
     .processor(offenceProcessor())
     .writer(offenceWriter())
     .listener(offenceSkipListener())
+    .faultTolerant()
+    .retry(Throwable::class.java)
+    .retryLimit(3)
     .build()
 
   @Bean

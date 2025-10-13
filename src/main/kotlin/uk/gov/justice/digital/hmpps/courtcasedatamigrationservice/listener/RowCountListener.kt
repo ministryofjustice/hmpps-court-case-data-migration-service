@@ -26,11 +26,21 @@ class RowCountListener(
       log.info("Job failed with status: ${jobExecution.status}")
     } else {
       log.info("Job completed successfully.")
+    }
+
+    if (isLastJobRun(jobExecution)) {
       if (sourceCount == targetCount) {
         log.info("✅ Row counts match. Migration looks successful.")
       } else {
         log.info("⚠️ Row counts do not match. Please investigate.")
       }
     }
+  }
+
+  private fun isLastJobRun(jobExecution: JobExecution): Boolean {
+    val jobParameters = jobExecution.jobParameters
+    val currentBatchCount = jobParameters.getLong("currentBatchCount")
+    val batchSize = jobParameters.getLong("batchSize")
+    return currentBatchCount != null && batchSize != null && currentBatchCount + 1 == batchSize
   }
 }

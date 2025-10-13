@@ -25,7 +25,7 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
   }
 
   override fun process(defendantQueryResult: DefendantQueryResult): Defendant {
-    log.info("Processing defendant with ID: {}", defendantQueryResult.id)
+//    log.info("Processing defendant with ID: {}", defendantQueryResult.id)
 
     return Defendant(
       id = defendantQueryResult.id,

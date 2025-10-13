@@ -8,6 +8,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.springframework.batch.core.BatchStatus
 import org.springframework.batch.core.JobExecution
+import org.springframework.batch.core.JobParametersBuilder
 import org.springframework.jdbc.core.JdbcTemplate
 
 class RowCountListenerTest {
@@ -43,7 +44,6 @@ class RowCountListenerTest {
       "Source row count: 100",
       "Target row count: 100",
       "Job completed successfully.",
-      "✅ Row counts match. Migration looks successful.",
     )
   }
 
@@ -59,7 +59,6 @@ class RowCountListenerTest {
       "Source row count: 100",
       "Target row count: 90",
       "Job completed successfully.",
-      "⚠️ Row counts do not match. Please investigate.",
     )
   }
 
@@ -75,6 +74,42 @@ class RowCountListenerTest {
       "Source row count: 100",
       "Target row count: 100",
       "Job failed with status: FAILED",
+    )
+  }
+
+  @Test
+  fun `should log success and row counts match when row counts match`() {
+    whenever(sourceJdbcTemplate.queryForObject(sourceQuery, Int::class.java)).thenReturn(100)
+    whenever(targetJdbcTemplate.queryForObject(targetQuery, Int::class.java)).thenReturn(100)
+
+    val jobParameters = JobParametersBuilder()
+      .addLong("batchSize", 15)
+      .addLong("currentBatchCount", 14)
+      .toJobParameters()
+    val jobExecution = JobExecution(1L, jobParameters)
+    jobExecution.status = BatchStatus.COMPLETED
+    listener.afterJob(jobExecution)
+
+    assertThat(logCaptor.infoLogs).contains(
+      "✅ Row counts match. Migration looks successful.",
+    )
+  }
+
+  @Test
+  fun `should log warning and row counts do not match when row counts do not match`() {
+    whenever(sourceJdbcTemplate.queryForObject(sourceQuery, Int::class.java)).thenReturn(100)
+    whenever(targetJdbcTemplate.queryForObject(targetQuery, Int::class.java)).thenReturn(90)
+
+    val jobParameters = JobParametersBuilder()
+      .addLong("batchSize", 15)
+      .addLong("currentBatchCount", 14)
+      .toJobParameters()
+    val jobExecution = JobExecution(1L, jobParameters)
+    jobExecution.status = BatchStatus.COMPLETED
+    listener.afterJob(jobExecution)
+
+    assertThat(logCaptor.infoLogs).contains(
+      "⚠️ Row counts do not match. Please investigate.",
     )
   }
 }
