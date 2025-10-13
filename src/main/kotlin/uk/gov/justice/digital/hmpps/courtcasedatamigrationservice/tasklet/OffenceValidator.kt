@@ -206,7 +206,7 @@ FROM hmpps_court_case_service.offence
       }
     }
 
-    // Basic fields
+    // Offence
     compare("offence_code", "code", "Offence code")
     compare("title", "title", "Title")
     compare("act", "legislation", "Act (or Legislation)")
