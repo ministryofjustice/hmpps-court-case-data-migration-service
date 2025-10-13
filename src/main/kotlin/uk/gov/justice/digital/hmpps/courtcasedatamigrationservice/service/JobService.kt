@@ -58,13 +58,15 @@ class JobService(
       val extra = if (i < remainder) 1 else 0
       val chunkSize = baseChunkSize + extra
       val chunkMax = currentMin!! + chunkSize - 1
-
+      log.info("---------------------------------------------------------------\n")
       log.info("Launching job chunk $i with range: [$currentMin to $chunkMax]")
 
       val params = JobParametersBuilder()
         .addString("run.id", UUID.randomUUID().toString())
         .addLong("minId", currentMin)
         .addLong("maxId", chunkMax)
+        .addLong("batchSize", batchSize.toLong())
+        .addLong("currentBatchCount", i.toLong())
         .toJobParameters()
 
       val jobExecution = jobLauncher.run(job, params)
@@ -76,6 +78,8 @@ class JobService(
 
       currentMin = chunkMax + 1
     }
+
+    log.info("---------------------------------------------------------------\n")
 
     afterJob()
     ResponseEntity.ok("$jobName job completed. Check logs for details.")

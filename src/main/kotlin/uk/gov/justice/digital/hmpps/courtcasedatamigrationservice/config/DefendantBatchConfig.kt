@@ -69,7 +69,7 @@ class DefendantBatchConfig(
   ): JdbcCursorItemReader<DefendantQueryResult> = JdbcCursorItemReaderBuilder<DefendantQueryResult>()
     .name("defendantReader")
     .dataSource(sourceDataSource)
-    .fetchSize(1000)
+    .fetchSize(3000)
     .sql(
       """
         SELECT d.id, d.manual_update, d.crn, d.cro, d.name, d.date_of_birth, d.offender_confirmed, d.nationality_1, d.nationality_2, d.sex, d.phone_number, d.address, d.tsv_name, d.pnc, d.cpr_uuid, d.created, d.created_by, d.last_updated, d.last_updated_by, d.deleted, d.version
