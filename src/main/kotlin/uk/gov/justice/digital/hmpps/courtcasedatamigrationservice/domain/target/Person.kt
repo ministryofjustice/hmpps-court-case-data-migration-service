@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
-import java.sql.Timestamp
 import java.time.LocalDate
 
 data class Person(
@@ -22,9 +21,9 @@ data class Person(
   val occupationCode: String?,
   val contactInformation: ContactInformation?,
   val address: Address?,
-  val createdAt: Timestamp?,
+  val createdAt: String?,
   val createdBy: String?,
-  val updatedAt: Timestamp?,
+  val updatedAt: String?,
   val updatedBy: String?,
   val isDeleted: Boolean?,
   val version: Int?,

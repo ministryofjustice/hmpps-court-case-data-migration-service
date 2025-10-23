@@ -1,13 +1,12 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.jdbc.core.JdbcTemplate
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenceConstants.SOURCE_QUERY
 
 class OffenceValidator(
   private val sourceJdbcTemplate: JdbcTemplate,
   private val targetJdbcTemplate: JdbcTemplate,
-) : Validator {
+) : Validator() {
 
   override fun fetchSourceIDs(minId: Long, maxId: Long, sampleSize: Int): List<Long> = sourceJdbcTemplate.queryForList(
     "SELECT id FROM courtcaseservice.offence WHERE id BETWEEN ? AND ? ORDER BY RANDOM() LIMIT ?",
@@ -16,44 +15,7 @@ class OffenceValidator(
   )
 
   override fun fetchSourceRecord(id: Long): Map<String, Any>? = sourceJdbcTemplate.query(
-    """
-    SELECT
-      o.id, o.fk_hearing_defendant_id, o.offence_code, o.summary, o.title, o.sequence, o.act, o.list_no, 
-      o.short_term_custody_predictor_score, o.created, o.created_by, o.last_updated, o.last_updated_by, 
-      o.deleted, o.version,
-
-      p.id AS plea_id, p.date AS plea_date, p.value AS plea_value, p.created AS plea_created, 
-      p.created_by AS plea_created_by, p.last_updated AS plea_last_updated, 
-      p.last_updated_by AS plea_last_updated_by, p.deleted AS plea_deleted, p.version AS plea_version,
-
-      v.id AS verdict_id, v.date AS verdict_date, v.type_description AS verdict_type_description, 
-      v.created AS verdict_created, v.created_by AS verdict_created_by, 
-      v.last_updated AS verdict_last_updated, v.last_updated_by AS verdict_last_updated_by, 
-      v.deleted AS verdict_deleted, v.version AS verdict_version,
-
-      (
-          SELECT json_agg(json_build_object(
-              'id', jr.id,
-              'is_convicted_result', jr.is_convicted_result,
-              'judicial_result_type_id', jr.judicial_result_type_id,
-              'label', jr.label,
-              'result_text', jr.result_text,
-              'created', jr.created,
-              'created_by', jr.created_by,
-              'last_updated', jr.last_updated,
-              'last_updated_by', jr.last_updated_by,
-              'deleted', jr.deleted,
-              'version', jr.version
-          ))
-          FROM courtcaseservice.judicial_result jr
-          WHERE jr.offence_id = o.id
-      ) AS judicial_results
-
-    FROM courtcaseservice.offence o
-    LEFT JOIN courtcaseservice.plea p ON o.plea_id = p.id
-    LEFT JOIN courtcaseservice.verdict v ON o.verdict_id = v.id
-    WHERE o.id = ?
-    """.trimIndent(),
+    "$SOURCE_QUERY WHERE o.id = ?",
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
@@ -213,6 +175,7 @@ FROM hmpps_court_case_service.offence
     compare("list_no", "listing_number", "List number")
     compare("sequence", "sequence", "Sequence")
     compare("short_term_custody_predictor_score", "short_term_custody_predictor_score", "Custody predictor score")
+    compare("summary", "wording", "Wording")
 
     // Plea
     compare("plea_id", "plea_id", "Plea ID")
@@ -234,47 +197,7 @@ FROM hmpps_court_case_service.offence
     return errors
   }
 
-  val objectMapper = jacksonObjectMapper()
-
   fun compareJudicialResults(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
-    val errors = mutableListOf<String>()
-
-    val sourceList: List<Map<String, Any?>> = try {
-      objectMapper.readValue(sourceJson ?: "[]")
-    } catch (e: Exception) {
-      errors.add("Failed to parse source judicial results for ID $id")
-      return errors
-    }
-
-    val targetList: List<Map<String, Any?>> = try {
-      objectMapper.readValue(targetJson ?: "[]")
-    } catch (e: Exception) {
-      errors.add("Failed to parse target judicial results for ID $id")
-      return errors
-    }
-
-    if (sourceList.size != targetList.size) {
-      errors.add("Judicial results count mismatch for ID $id: ${sourceList.size} vs ${targetList.size}")
-    }
-
-    val sortedSource = sourceList.sortedBy { it["id"].toString() }
-    val sortedTarget = targetList.sortedBy { it["id"].toString() }
-
-    fun compare(
-      source: Map<String, Any?>,
-      target: Map<String, Any?>,
-      sourceField: String,
-      targetField: String,
-      label: String = sourceField,
-      index: Int,
-    ) {
-      val sourceValue = source[sourceField]
-      val targetValue = target[targetField]
-      if (sourceValue != targetValue) {
-        errors.add("Judicial result field '$label' mismatch for ID $id (index $index): '$sourceValue' vs '$targetValue'")
-      }
-    }
-
     val fieldMappings = listOf(
       Triple("id", "id", "ID"),
       Triple("is_convicted_result", "isConvictedResult", "Is convicted result"),
@@ -288,18 +211,6 @@ FROM hmpps_court_case_service.offence
       Triple("deleted", "isDeleted", "Deleted"),
       Triple("version", "version", "Version"),
     )
-
-    for (i in sortedSource.indices) {
-      val sourceResult = sortedSource.getOrNull(i)
-      val targetResult = sortedTarget.getOrNull(i)
-
-      if (sourceResult == null || targetResult == null) continue
-
-      for ((sourceField, targetField, label) in fieldMappings) {
-        compare(sourceResult, targetResult, sourceField, targetField, label, i)
-      }
-    }
-
-    return errors
+    return compareJsonLists(sourceJson, targetJson, id, "Hearing outcome", fieldMappings)
   }
 }

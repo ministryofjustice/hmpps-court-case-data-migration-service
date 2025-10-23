@@ -1,15 +1,13 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
-import java.sql.Timestamp
-
 data class Plea(
   val id: Int,
-  val date: Timestamp?,
+  val date: String?,
   val value: String?,
-  val createdAt: Timestamp?,
+  val createdAt: String?,
   val createdBy: String?,
-  val lastUpdatedAt: Timestamp?,
-  val lastUpdatedBy: String?,
+  val updatedAt: String?,
+  val updatedBy: String?,
   val isDeleted: Boolean?,
   val version: Int?,
 )

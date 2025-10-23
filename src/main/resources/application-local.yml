@@ -7,11 +7,16 @@ database:
     endpoint: localhost:5432
     username: admin
     password: password
-  source: # add dev database here
-    name: dbaaade99b4f658d25
+#  source: # dev
+#    name: dbaaade99b4f658d25
+#    endpoint: localhost:5430
+#    username: cp0Okg8u16
+#    password: Rpymb3UG2DA7D3NZ
+  source: # preprod
+    name: db561e0a5371686304
     endpoint: localhost:5431
-    username:
-    password:
+    username: cpMhnJcXxW
+    password: oH54rNPdgLcLvRYy
   target:
     name: hmpps_court_case_service_db
     endpoint: localhost:5432
