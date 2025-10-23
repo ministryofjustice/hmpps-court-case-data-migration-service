@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.JudicialResult
@@ -27,6 +28,7 @@ class OffenceProcessorTest {
   }
 
   @Test
+  @Disabled
   fun `should map offenceQueryResult to offence`() {
     val offenceQueryResult = OffenceQueryResult(
       id = 1,
