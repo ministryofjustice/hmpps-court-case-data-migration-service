@@ -1,80 +1,79 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler
 
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
+import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.MockedConstruction
-import org.mockito.Mockito.mockConstruction
+import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
-import org.mockito.kotlin.eq
-import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.http.ResponseEntity
-import org.springframework.jdbc.core.JdbcTemplate
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
-import javax.sql.DataSource
 
 class JobSchedulerTest {
 
   private lateinit var jobService: JobService
-  private lateinit var dataSource: DataSource
+  private lateinit var schedulingConfigRepository: SchedulingConfigRepository
   private lateinit var jobScheduler: JobScheduler
-  private var jdbcTemplateConstruction: MockedConstruction<JdbcTemplate>? = null
-
-  private val jobType = JobType.OFFENCE
 
   @BeforeEach
   fun setup() {
     jobService = mock()
-    dataSource = mock()
-  }
-
-  @AfterEach
-  fun tearDown() {
-    jdbcTemplateConstruction?.close()
+    schedulingConfigRepository = mock()
+    jobScheduler = JobScheduler(jobService, schedulingConfigRepository, JobType.CASE)
   }
 
   @Test
-  fun `should run job when enabled`() {
-    jdbcTemplateConstruction = mockConstruction(JdbcTemplate::class.java) { mock, _ ->
-      whenever(mock.queryForObject(any(), eq(Boolean::class.java), eq(jobType.name))).thenReturn(true)
-    }
+  fun `should run job when single job enabled and job is enabled`() {
+    whenever(schedulingConfigRepository.countEnabledJobs()).thenReturn(1)
+    whenever(schedulingConfigRepository.isJobEnabled("CASE")).thenReturn(true)
 
-    jobScheduler = JobScheduler(jobService, dataSource, jobType)
     jobScheduler.runJob()
 
     verify(jobService).runJob()
+    verify(schedulingConfigRepository).isJobEnabled("CASE")
   }
 
   @Test
-  fun `should not run job when disabled`() {
-    jdbcTemplateConstruction = mockConstruction(JdbcTemplate::class.java) { mock, _ ->
-      whenever(mock.queryForObject(any(), eq(Boolean::class.java), eq(jobType.name))).thenReturn(false)
-    }
+  fun `should not run job when job is disabled`() {
+    whenever(schedulingConfigRepository.countEnabledJobs()).thenReturn(1)
+    whenever(schedulingConfigRepository.isJobEnabled("CASE")).thenReturn(false)
 
-    jobScheduler = JobScheduler(jobService, dataSource, jobType)
     jobScheduler.runJob()
 
     verify(jobService, never()).runJob()
   }
 
   @Test
-  fun `should handle exception gracefully`() {
-    jdbcTemplateConstruction = mockConstruction(JdbcTemplate::class.java) { mock, _ ->
-      whenever(mock.queryForObject(any(), eq(Boolean::class.java), eq(jobType.name))).thenThrow(RuntimeException("DB error"))
-    }
+  fun `should skip job when multiple jobs enabled`() {
+    whenever(schedulingConfigRepository.countEnabledJobs()).thenReturn(3)
 
-    jobScheduler = JobScheduler(jobService, dataSource, jobType)
-    val result = jobScheduler.runJob()
+    jobScheduler.runJob()
 
-    assertThat(result).isInstanceOf(ResponseEntity::class.java)
-    val response = result as ResponseEntity<*>
-    assertThat(response.statusCode.value()).isEqualTo(500)
-    assertThat(response.body.toString()).contains("Job failed to start")
     verify(jobService, never()).runJob()
+    verify(schedulingConfigRepository, never()).isJobEnabled(any())
+  }
+
+  @Test
+  fun `should handle exception thrown from repository`() {
+    whenever(schedulingConfigRepository.countEnabledJobs()).thenThrow(RuntimeException("DB down"))
+
+    assertThatCode { jobScheduler.runJob() }
+      .doesNotThrowAnyException()
+
+    verify(jobService, never()).runJob()
+  }
+
+  @Test
+  fun `should handle exception thrown from jobService`() {
+    whenever(schedulingConfigRepository.countEnabledJobs()).thenReturn(1)
+    whenever(schedulingConfigRepository.isJobEnabled("CASE")).thenReturn(true)
+    whenever(jobService.runJob()).thenThrow(RuntimeException("job failed"))
+
+    assertThatCode { jobScheduler.runJob() }
+      .doesNotThrowAnyException()
+
+    verify(jobService).runJob()
   }
 }
