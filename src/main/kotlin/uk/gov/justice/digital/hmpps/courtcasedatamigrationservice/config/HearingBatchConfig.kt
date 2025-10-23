@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCo
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.HearingProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.HearingValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
@@ -174,5 +175,9 @@ class HearingBatchConfig(
   )
 
   @Bean
-  fun hearingJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(jobService = hearingJobService(hearingJob(timerJobListener)), dataSource = dataSource, jobType = JobType.HEARING)
+  fun hearingJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(
+    jobService = hearingJobService(hearingJob(timerJobListener)),
+    jobType = JobType.HEARING,
+    schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
+  )
 }

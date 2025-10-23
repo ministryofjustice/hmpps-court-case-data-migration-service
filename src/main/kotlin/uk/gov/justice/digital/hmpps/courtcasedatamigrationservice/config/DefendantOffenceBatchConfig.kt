@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCo
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantOffenceProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantOffenceValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
@@ -170,5 +171,9 @@ class DefendantOffenceBatchConfig(
   )
 
   @Bean
-  fun defendantOffenceJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(jobService = defendantOffenceJobService(defendantOffenceJob(timerJobListener)), dataSource = dataSource, jobType = JobType.DEFENDANT_OFFENCE)
+  fun defendantOffenceJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(
+    jobService = defendantOffenceJobService(defendantOffenceJob(timerJobListener)),
+    jobType = JobType.DEFENDANT_OFFENCE,
+    schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
+  )
 }
