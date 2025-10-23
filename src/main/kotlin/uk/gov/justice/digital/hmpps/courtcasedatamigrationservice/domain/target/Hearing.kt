@@ -7,6 +7,7 @@ data class Hearing(
   val type: String?,
   val eventType: String?,
   val listNumber: String?,
+  val firstCreated: Timestamp?,
   val hearingOutcome: String?,
   val hearingCaseNote: String?,
   val createdAt: Timestamp?,

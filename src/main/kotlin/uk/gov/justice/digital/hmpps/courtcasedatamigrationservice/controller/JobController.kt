@@ -16,7 +16,12 @@ class JobController(
   private val offenceJobService: JobService,
   @Qualifier("defendantJobService")
   private val defendantJobService: JobService,
-
+  @Qualifier("hearingJobService")
+  private val hearingJobService: JobService,
+  @Qualifier("defendantOffenceJobService")
+  private val defendantOffenceJobService: JobService,
+  @Qualifier("caseJobService")
+  private val caseJobService: JobService,
 ) {
 
   private companion object {
@@ -33,6 +38,9 @@ class JobController(
       when (type) {
         JobType.OFFENCE -> offenceJobService.runJob()
         JobType.DEFENDANT -> defendantJobService.runJob()
+        JobType.HEARING -> hearingJobService.runJob()
+        JobType.CASE -> caseJobService.runJob()
+        JobType.DEFENDANT_OFFENCE -> defendantOffenceJobService.runJob()
       }
       ResponseEntity.ok("$type job started successfully")
     } catch (ex: Exception) {

@@ -5,7 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 class DefendantValidator(
   private val sourceJdbcTemplate: JdbcTemplate,
   private val targetJdbcTemplate: JdbcTemplate,
-) : Validator {
+) : Validator() {
 
   override fun fetchSourceIDs(minId: Long, maxId: Long, sampleSize: Int): List<Long> = sourceJdbcTemplate.queryForList(
     "SELECT id FROM courtcaseservice.defendant WHERE id BETWEEN ? AND ? ORDER BY RANDOM() LIMIT ?",

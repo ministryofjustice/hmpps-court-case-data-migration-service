@@ -5,4 +5,10 @@ data class CaseMarker(
   val typeId: String?,
   val typeCode: String?,
   val typeDescription: String?,
+  val createdAt: String?,
+  val createdBy: String?,
+  val updatedAt: String?,
+  val updatedBy: String?,
+  val isDeleted: Boolean?,
+  val version: Int?,
 )

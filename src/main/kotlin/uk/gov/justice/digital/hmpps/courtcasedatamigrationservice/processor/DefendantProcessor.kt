@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Person
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Sex
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.util.DateUtils.normalizeIsoDateTime
 import kotlin.String
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Address as TargetAddress
 
@@ -25,7 +26,7 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
   }
 
   override fun process(defendantQueryResult: DefendantQueryResult): Defendant {
-    log.info("Processing defendant with ID: {}", defendantQueryResult.id)
+//    log.info("Processing defendant with ID: {}", defendantQueryResult.id)
 
     return Defendant(
       id = defendantQueryResult.id,
@@ -76,9 +77,9 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
       contactInformation = buildContactInformationObject(defendantQueryResult),
       address = buildAddressObject(defendantQueryResult),
       // TODO check these fields for person
-      createdAt = defendantQueryResult.created,
+      createdAt = normalizeIsoDateTime(defendantQueryResult.created),
       createdBy = defendantQueryResult.createdBy,
-      updatedAt = defendantQueryResult.lastUpdated,
+      updatedAt = normalizeIsoDateTime(defendantQueryResult.lastUpdated),
       updatedBy = defendantQueryResult.lastUpdatedBy,
       isDeleted = defendantQueryResult.deleted,
       version = defendantQueryResult.version,
@@ -104,7 +105,7 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
       address4 = address?.line4,
       address5 = address?.line5,
       postcode = address?.postcode,
-      createdAt = null,
+      createdAt = null, // TODO how do we populate these fields?
       createdBy = null,
       updatedAt = null,
       updatedBy = null,
@@ -131,7 +132,7 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
       primaryEmail = null,
       secondaryEmail = null,
       fax = null,
-      createdAt = null,
+      createdAt = null, // TODO how do we populate these fields?
       createdBy = null,
       updatedAt = null,
       updatedBy = null,

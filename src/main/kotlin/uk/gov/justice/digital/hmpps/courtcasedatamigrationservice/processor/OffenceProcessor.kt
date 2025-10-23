@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Plea
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Verdict
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.util.DateUtils.normalizeIsoDateTime
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.JudicialResult as TargetJudicialResult
 
 class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
@@ -21,11 +22,10 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
   private val objectMapper = jacksonObjectMapper()
 
   override fun process(offenceQueryResult: OffenceQueryResult): Offence {
-    log.info("Processing offence: {}", offenceQueryResult.id)
+//    log.info("Processing offence: {}", offenceQueryResult.id)
 
     val plea = if (offenceQueryResult.pleaId != null) buildPleaAsJSONBString(offenceQueryResult.pleaId, offenceQueryResult) else null
     val verdict = if (offenceQueryResult.verdictId != null) buildVerdictAsJSONBString(offenceQueryResult.verdictId, offenceQueryResult) else null
-    val judicialResultsAsJson = buildJudicialResultAsJSONBString(offenceQueryResult)
 
     val offence = Offence(
       id = offenceQueryResult.id,
@@ -34,8 +34,9 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
       code = offenceQueryResult.offenceCode,
       listingNumber = offenceQueryResult.listNo,
       sequence = offenceQueryResult.sequence,
-      shortTermCustodyPredictorScore = offenceQueryResult.shortTeamCustodyPredictorScore,
-      judicialResults = judicialResultsAsJson,
+      shortTermCustodyPredictorScore = offenceQueryResult.shortTeamCustodyPredictorScore, // TODO null at source is being saved as 0 in target
+      wording = offenceQueryResult.summary,
+      judicialResults = buildJudicialResultAsJSONBString(offenceQueryResult),
       plea = plea,
       verdict = verdict,
       createdAt = offenceQueryResult.created,
@@ -60,7 +61,7 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
           resultTypeId = result.judicialResultTypeId,
           isJudicialResultDeleted = null, // TODO check where this data comes from
           resultText = result.resultText,
-          createdAt = result.created,
+          createdAt = result.created, // TODO review the code here for timestamp
           createdBy = result.createdBy,
           updatedAt = result.lastUpdated,
           updatedBy = result.lastUpdatedBy,
@@ -78,12 +79,12 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
   ): String? = objectMapper.writeValueAsString(
     Verdict(
       id = verdictId,
-      date = offenceQueryResult.verdictDate,
+      date = normalizeIsoDateTime(offenceQueryResult.verdictDate),
       type = offenceQueryResult.verdictTypeDescription,
-      createdAt = offenceQueryResult.verdictCreated,
+      createdAt = normalizeIsoDateTime(offenceQueryResult.verdictCreated),
       createdBy = offenceQueryResult.verdictCreatedBy,
-      lastUpdatedAt = offenceQueryResult.verdictLastUpdated,
-      lastUpdatedBy = offenceQueryResult.verdictLastUpdatedBy,
+      updatedAt = normalizeIsoDateTime(offenceQueryResult.verdictLastUpdated),
+      updatedBy = offenceQueryResult.verdictLastUpdatedBy,
       isDeleted = offenceQueryResult.verdictDeleted,
       version = offenceQueryResult.verdictVersion,
     ),
@@ -95,12 +96,12 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
   ): String? = objectMapper.writeValueAsString(
     Plea(
       id = pleaId,
-      date = offenceQueryResult.pleaDate,
+      date = normalizeIsoDateTime(offenceQueryResult.pleaDate),
       value = offenceQueryResult.pleaValue,
-      createdAt = offenceQueryResult.pleaCreated,
+      createdAt = normalizeIsoDateTime(offenceQueryResult.pleaCreated),
       createdBy = offenceQueryResult.pleaCreatedBy,
-      lastUpdatedAt = offenceQueryResult.pleaLastUpdated,
-      lastUpdatedBy = offenceQueryResult.pleaLastUpdatedBy,
+      updatedAt = normalizeIsoDateTime(offenceQueryResult.pleaLastUpdated),
+      updatedBy = offenceQueryResult.pleaLastUpdatedBy,
       isDeleted = offenceQueryResult.pleaDeleted,
       version = offenceQueryResult.pleaVersion,
     ),
