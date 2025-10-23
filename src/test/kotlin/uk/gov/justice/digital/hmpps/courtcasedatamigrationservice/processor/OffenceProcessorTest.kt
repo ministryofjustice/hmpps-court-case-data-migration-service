@@ -11,6 +11,9 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Plea
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Verdict
 import java.sql.Timestamp
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class OffenceProcessorTest {
 
@@ -81,7 +84,13 @@ class OffenceProcessorTest {
     val plea: Plea = objectMapper.readValue(offence.plea, Plea::class.java)
 
     assertThat(plea.id).isEqualTo(101)
-    assertThat(plea.date).isEqualTo("2025-09-23T10:00:00+01:00")
+
+    val inputDateTime = LocalDateTime.of(2025, 9, 23, 10, 0, 0)
+    val expected = inputDateTime.atZone(ZoneId.of("Europe/London"))
+      .toOffsetDateTime()
+      .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
+    assertThat(plea.date).isEqualTo(expected)
     assertThat(plea.value).isEqualTo("Guilty")
     assertThat(plea.createdAt).isEqualTo("2025-07-28T09:08:46.720893+01:00")
     assertThat(plea.createdBy).isEqualTo("clerk")

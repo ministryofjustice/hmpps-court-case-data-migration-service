@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test
 import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 class DateUtilsTest {
 
@@ -38,9 +40,14 @@ class DateUtilsTest {
 
   @Test
   fun `should normalize Timestamp to ISO string`() {
-    val timestamp = Timestamp.valueOf(LocalDateTime.of(2023, 10, 23, 10, 15, 30))
+    val zoneId = ZoneId.of("Europe/London")
+    val localDateTime = LocalDateTime.of(2023, 10, 23, 10, 15, 30)
+    val timestamp = Timestamp.valueOf(localDateTime)
+
     val result = DateUtils.normalizeIsoDateTime(timestamp)
-    assertThat(result).isEqualTo("2023-10-23T10:15:30+01:00")
+
+    val expected = localDateTime.atZone(zoneId).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+    assertThat(result).isEqualTo(expected)
   }
 
   @Test
