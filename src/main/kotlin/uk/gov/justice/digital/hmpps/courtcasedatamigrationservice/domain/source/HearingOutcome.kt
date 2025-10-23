@@ -2,9 +2,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import java.sql.Time
 import java.sql.Timestamp
-import java.time.LocalDate
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class HearingOutcome(

@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
-import java.sql.Timestamp
 import java.time.LocalDate
 
 data class Person(

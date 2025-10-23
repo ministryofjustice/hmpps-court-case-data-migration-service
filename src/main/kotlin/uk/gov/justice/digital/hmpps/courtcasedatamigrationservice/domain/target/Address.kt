@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
-import java.sql.Timestamp
-
 data class Address(
   val id: Int,
   val address1: String?,
