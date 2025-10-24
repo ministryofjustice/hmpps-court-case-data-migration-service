@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.jdbc.core.JdbcTemplate
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseConstants.SOURCE_QUERY
 
