@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.CaseMarker
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.CaseQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.CaseURN
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.CaseURNs
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.ProsecutionCase
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.util.DateUtils.normalizeIsoDateTime
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.CaseDocument as TargetCaseDocument
@@ -45,15 +46,17 @@ class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
   private fun buildCaseURNAsJSONBString(
     caseQueryResult: CaseQueryResult,
   ): String? = objectMapper.writeValueAsString(
-    listOf(
-      CaseURN(
-        caseQueryResult.urn,
-        createdAt = normalizeIsoDateTime(caseQueryResult.created),
-        createdBy = caseQueryResult.createdBy,
-        updatedAt = normalizeIsoDateTime(caseQueryResult.lastUpdated),
-        updatedBy = caseQueryResult.lastUpdatedBy,
-        isDeleted = caseQueryResult.deleted,
-        version = caseQueryResult.version,
+    CaseURNs(
+      caseURNs = listOf(
+        CaseURN(
+          caseURN = caseQueryResult.urn,
+          createdAt = normalizeIsoDateTime(caseQueryResult.created),
+          createdBy = caseQueryResult.createdBy,
+          updatedAt = normalizeIsoDateTime(caseQueryResult.lastUpdated),
+          updatedBy = caseQueryResult.lastUpdatedBy,
+          isDeleted = caseQueryResult.deleted,
+          version = caseQueryResult.version,
+        ),
       ),
     ),
   )

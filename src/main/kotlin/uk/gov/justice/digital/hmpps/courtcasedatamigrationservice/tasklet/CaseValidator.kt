@@ -124,9 +124,9 @@ class CaseValidator(
     val fieldMappings = listOf(
       Triple("id", "id", "ID"),
       Triple("type_description", "typeDescription", "Type Description"),
-//      Triple("created", "createdAt", "Created"),
+      Triple("created", "createdAt", "Created"),
       Triple("created_by", "createdBy", "Created by"),
-//      Triple("last_updated", "updatedAt", "Last updated"),
+      Triple("last_updated", "updatedAt", "Last updated"),
       Triple("last_updated_by", "updatedBy", "Last updated by"),
       Triple("deleted", "isDeleted", "Deleted"),
       Triple("version", "version", "Version"),
@@ -139,9 +139,9 @@ class CaseValidator(
       Triple("id", "id", "ID"),
       Triple("document_id", "documentId", "Document ID"),
       Triple("document_name", "documentName", "Document Name"),
-//      Triple("created", "createdAt", "Created"),
+      Triple("created", "createdAt", "Created"),
       Triple("created_by", "createdBy", "Created by"),
-//      Triple("last_updated", "updatedAt", "Last updated"),
+      Triple("last_updated", "updatedAt", "Last updated"),
       Triple("last_updated_by", "updatedBy", "Last updated by"),
       Triple("deleted", "isDeleted", "Deleted"),
       Triple("version", "version", "Version"),
@@ -151,12 +151,22 @@ class CaseValidator(
 
   fun getCaseURN(jsonString: String?): String? {
     return try {
-      if (jsonString == null) {
-        return null
-      }
+      if (jsonString == null) return null
       val mapper = jacksonObjectMapper()
-      val list: List<Map<String, Any>> = mapper.readValue(jsonString)
-      list.firstOrNull()?.get("caseURN") as? String
+      val rootNode = mapper.readTree(jsonString)
+      val caseURNsNode = rootNode.get("caseURNs")
+
+      if (caseURNsNode != null && caseURNsNode.isArray && caseURNsNode.size() > 0) {
+        val firstCaseURNNode = caseURNsNode[0]
+        val caseURN = firstCaseURNNode.get("caseURN")?.asText()
+        return if (caseURN == "null") {
+          null
+        } else {
+          caseURN
+        }
+      } else {
+        null
+      }
     } catch (e: Exception) {
       e.printStackTrace()
       null
