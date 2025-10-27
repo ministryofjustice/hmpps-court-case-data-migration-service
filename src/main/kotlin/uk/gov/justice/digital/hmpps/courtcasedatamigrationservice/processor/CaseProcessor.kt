@@ -28,6 +28,7 @@ class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
 
     return ProsecutionCase(
       id = caseQueryResult.id,
+      caseId = caseQueryResult.caseId,
       caseURN = buildCaseURNAsJSONBString(caseQueryResult),
       sourceType = caseQueryResult.sourceType,
       cID = null,
@@ -45,21 +46,24 @@ class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
   // TODO change this to a list? Check id is not required here
   private fun buildCaseURNAsJSONBString(
     caseQueryResult: CaseQueryResult,
-  ): String? = objectMapper.writeValueAsString(
-    CaseURNs(
-      caseURNs = listOf(
-        CaseURN(
-          caseURN = caseQueryResult.urn,
-          createdAt = normalizeIsoDateTime(caseQueryResult.created),
-          createdBy = caseQueryResult.createdBy,
-          updatedAt = normalizeIsoDateTime(caseQueryResult.lastUpdated),
-          updatedBy = caseQueryResult.lastUpdatedBy,
-          isDeleted = caseQueryResult.deleted,
-          version = caseQueryResult.version,
+  ): String? {
+    if (caseQueryResult.urn == null) return null
+    return objectMapper.writeValueAsString(
+      CaseURNs(
+        caseURNs = listOf(
+          CaseURN(
+            caseURN = caseQueryResult.urn,
+            createdAt = normalizeIsoDateTime(caseQueryResult.created),
+            createdBy = caseQueryResult.createdBy,
+            updatedAt = normalizeIsoDateTime(caseQueryResult.lastUpdated),
+            updatedBy = caseQueryResult.lastUpdatedBy,
+            isDeleted = caseQueryResult.deleted,
+            version = caseQueryResult.version,
+          ),
         ),
       ),
-    ),
-  )
+    )
+  }
 
   // TODO do we want to capture createdBy etc for this as its not on the new schema but captured in existing db
   // TODO review the data types in createdBy etc as theyre string and not timestamp

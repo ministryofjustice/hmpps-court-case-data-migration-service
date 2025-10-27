@@ -4,6 +4,7 @@ import java.sql.Timestamp
 
 data class CaseQueryResult(
   val id: Int,
+  val caseId: String?,
   val urn: String?,
   val sourceType: String?,
   val created: Timestamp?,
