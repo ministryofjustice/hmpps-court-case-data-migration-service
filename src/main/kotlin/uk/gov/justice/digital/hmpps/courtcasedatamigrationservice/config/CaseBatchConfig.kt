@@ -76,6 +76,7 @@ class CaseBatchConfig(
     .rowMapper { rs, _ ->
       CaseQueryResult(
         id = rs.getInt("id"),
+        caseId = rs.getString("case_id"),
         urn = rs.getString("urn"),
         sourceType = rs.getString("source_type"),
         created = rs.getTimestamp("created"),
@@ -99,8 +100,8 @@ class CaseBatchConfig(
   fun caseWriter(): JdbcBatchItemWriter<ProsecutionCase> = JdbcBatchItemWriterBuilder<ProsecutionCase>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.prosecution_case (id, case_urn, source_type, c_id, case_markers, case_documents, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, CAST(:caseURN AS jsonb), :sourceType, :cID, CAST(:caseMarkers AS jsonb), CAST(:caseDocuments AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.prosecution_case (id, case_id,  case_urn, source_type, c_id, case_markers, case_documents, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :caseId, CAST(:caseURN AS jsonb), :sourceType, :cID, CAST(:caseMarkers AS jsonb), CAST(:caseDocuments AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()

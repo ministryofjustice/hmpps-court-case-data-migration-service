@@ -10,6 +10,7 @@ object CaseConstants {
   const val SOURCE_QUERY = """        
     SELECT
     cc.id,
+    cc.case_id,
     cc.urn,
     cc.source_type,
     cc.created,

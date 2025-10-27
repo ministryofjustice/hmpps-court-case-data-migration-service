@@ -4,6 +4,7 @@ import java.sql.Timestamp
 
 data class ProsecutionCase(
   val id: Int,
+  val caseId: String?,
   val caseURN: String?,
   val cID: Int?,
   val sourceType: String?,
