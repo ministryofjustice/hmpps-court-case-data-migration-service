@@ -45,6 +45,8 @@ class JobService(
       throw IllegalArgumentException("Batch size must be greater than 0")
     }
 
+    log.info("Batch size: $batchSize")
+
     val total = maxId - minId + 1
     if (total <= 0) {
       throw IllegalStateException("Invalid ID range: minId=$minId, maxId=$maxId")
@@ -59,7 +61,7 @@ class JobService(
       val chunkSize = baseChunkSize + extra
       val chunkMax = currentMin!! + chunkSize - 1
       log.info("---------------------------------------------------------------\n")
-      log.info("Launching job chunk $i with range: [$currentMin to $chunkMax]")
+      log.info("Launching job chunk $i / ${batchSize - 1} with range: [$currentMin to $chunkMax]")
 
       val params = JobParametersBuilder()
         .addString("run.id", UUID.randomUUID().toString())
