@@ -43,7 +43,7 @@ class DefendantProcessorTest {
       cro = "CRO789",
       tsvName = "Jane Smith",
       pnc = "PNC123456",
-      cpr_uuid = "UUID-1234",
+      cprUUID = "UUID-1234",
       offenderConfirmed = true,
       fkOffenderId = 10,
       created = Timestamp.valueOf("2025-09-24 12:00:00"),
