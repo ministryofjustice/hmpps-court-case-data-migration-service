@@ -50,7 +50,8 @@ class DefendantValidator(
         deleted,
         tsv_name,
         cpr_uuid,
-        c_id
+        c_id,
+        fk_offender_id
         FROM courtcaseservice.defendant
         WHERE id = ?
     """.trimIndent(),
@@ -127,6 +128,7 @@ class DefendantValidator(
         person -> 'contactInformation' ->> 'mobileNumber' AS mobileNumber,
         person -> 'contactInformation' ->> 'primaryEmail' AS primaryEmail,
         person -> 'contactInformation' ->> 'secondaryEmail' AS secondaryEmail,
+        offender_id,
         created_at,
         created_by,
         updated_at,
@@ -168,6 +170,7 @@ class DefendantValidator(
       "mobileNumber" to rs.getString("mobileNumber"),
       "primaryEmail" to rs.getString("primaryEmail"),
       "secondaryEmail" to rs.getString("secondaryEmail"),
+      "offender_id" to rs.getLong("offender_id"),
       "created_at" to rs.getTimestamp("created_at"),
       "created_by" to rs.getString("created_by"),
       "updated_at" to rs.getTimestamp("updated_at"),
@@ -211,6 +214,7 @@ class DefendantValidator(
     compare("postcode", "postcode", "Postcode")
     compare("home", "homeNumber", "Home number")
     compare("mobile", "mobileNumber", "Mobile number")
+    compare("fk_offender_id", "offender_id", "Offender ID")
     compare("created", "created_at", "Created At")
     compare("created_by", "created_by", "Created By")
     compare("last_updated", "updated_at", "Updated At")

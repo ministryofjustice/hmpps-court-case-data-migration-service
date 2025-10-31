@@ -83,7 +83,7 @@ class OffenceBatchConfig(
         sequence = rs.getInt("sequence"),
         act = rs.getString("act"),
         listNo = rs.getInt("list_no"),
-        shortTeamCustodyPredictorScore = rs.getInt("short_term_custody_predictor_score"),
+        shortTeamCustodyPredictorScore = rs.getInt("short_term_custody_predictor_score"), // TODO review all ints as may be populating with 0
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),

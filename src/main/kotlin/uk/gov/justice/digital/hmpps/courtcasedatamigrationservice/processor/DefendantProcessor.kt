@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.batch.item.ItemProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.Address
@@ -19,33 +20,32 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 
 class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
 
-  private val log = LoggerFactory.getLogger(DefendantProcessor::class.java)
+  private companion object {
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
+  }
 
   private val objectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
   }
 
-  override fun process(defendantQueryResult: DefendantQueryResult): Defendant {
-//    log.info("Processing defendant with ID: {}", defendantQueryResult.id)
-
-    return Defendant(
-      id = defendantQueryResult.id,
-      isManualUpdate = defendantQueryResult.isManualUpdate,
-      crn = defendantQueryResult.crn,
-      croNumber = defendantQueryResult.cro,
-      tsvName = defendantQueryResult.tsvName,
-      pncId = defendantQueryResult.pnc,
-      cprUuid = defendantQueryResult.cpr_uuid,
-      isOffenderConfirmed = defendantQueryResult.offenderConfirmed,
-      person = buildPersonJSONBString(defendantQueryResult),
-      createdAt = defendantQueryResult.created,
-      createdBy = defendantQueryResult.createdBy,
-      updatedAt = defendantQueryResult.lastUpdated,
-      updatedBy = defendantQueryResult.lastUpdatedBy,
-      isDeleted = defendantQueryResult.deleted,
-      version = defendantQueryResult.version,
-    )
-  }
+  override fun process(defendantQueryResult: DefendantQueryResult): Defendant = Defendant(
+    id = defendantQueryResult.id,
+    isManualUpdate = defendantQueryResult.isManualUpdate,
+    crn = defendantQueryResult.crn,
+    croNumber = defendantQueryResult.cro,
+    tsvName = defendantQueryResult.tsvName,
+    pncId = defendantQueryResult.pnc,
+    cprUUID = defendantQueryResult.cprUUID,
+    isOffenderConfirmed = defendantQueryResult.offenderConfirmed,
+    person = buildPersonJSONBString(defendantQueryResult),
+    offenderId = defendantQueryResult.fkOffenderId,
+    createdAt = defendantQueryResult.created,
+    createdBy = defendantQueryResult.createdBy,
+    updatedAt = defendantQueryResult.lastUpdated,
+    updatedBy = defendantQueryResult.lastUpdatedBy,
+    isDeleted = defendantQueryResult.deleted,
+    version = defendantQueryResult.version,
+  )
 
   private fun buildPersonJSONBString(defendantQueryResult: DefendantQueryResult): String {
     val name: Name? = defendantQueryResult.name?.let {
