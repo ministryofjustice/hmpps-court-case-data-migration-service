@@ -10,7 +10,16 @@ class DefendantOffenceValidator(
 ) : Validator() {
 
   override fun fetchSourceIDs(minId: Long, maxId: Long, sampleSize: Int): List<Long> = sourceJdbcTemplate.queryForList(
-    "SELECT id FROM courtcaseservice.hearing_defendant WHERE id BETWEEN ? AND ? ORDER BY RANDOM() LIMIT ?",
+    """SELECT
+              hd.id
+           FROM
+              courtcaseservice.defendant d
+           JOIN
+              courtcaseservice.hearing_defendant hd ON hd.fk_defendant_id  = d.id
+           JOIN
+              courtcaseservice.offence o ON o.fk_hearing_defendant_id  = hd.id 
+        WHERE hd.id BETWEEN ? AND ? 
+        ORDER BY RANDOM() LIMIT ?""",
     arrayOf(minId, maxId, sampleSize),
     Long::class.java,
   )
