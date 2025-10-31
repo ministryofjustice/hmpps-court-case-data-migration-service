@@ -168,7 +168,7 @@ class HearingBatchConfig(
     jobLauncher = jobLauncher,
     job = hearingJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
-    batchSize = 5,
+    batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
     jobName = "Hearing",

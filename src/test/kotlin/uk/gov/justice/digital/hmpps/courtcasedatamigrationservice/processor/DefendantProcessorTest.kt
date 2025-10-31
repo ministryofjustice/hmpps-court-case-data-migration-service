@@ -45,6 +45,7 @@ class DefendantProcessorTest {
       pnc = "PNC123456",
       cpr_uuid = "UUID-1234",
       offenderConfirmed = true,
+      fkOffenderId = 10,
       created = Timestamp.valueOf("2025-09-24 12:00:00"),
       createdBy = "system",
       lastUpdated = Timestamp.valueOf("2025-09-24 12:30:00"),
@@ -59,6 +60,7 @@ class DefendantProcessorTest {
     assertThat(defendant.crn).isEqualTo("CRN456")
     assertThat(defendant.tsvName).isEqualTo("Jane Smith")
     assertThat(defendant.pncId).isEqualTo("PNC123456")
+    assertThat(defendant.offenderId).isEqualTo(10)
     assertThat(defendant.createdAt).isEqualTo(Timestamp.valueOf("2025-09-24 12:00:00"))
     assertThat(defendant.updatedAt).isEqualTo(Timestamp.valueOf("2025-09-24 12:30:00"))
     assertThat(defendant.isDeleted).isFalse()
