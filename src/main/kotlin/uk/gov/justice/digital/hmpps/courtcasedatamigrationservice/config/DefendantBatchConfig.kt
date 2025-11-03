@@ -69,7 +69,7 @@ class DefendantBatchConfig(
     .name("defendantReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("$SOURCE_QUERY WHERE d.id BETWEEN $minId AND $maxId ORDER BY d.id ASC")
+    .sql("$SOURCE_QUERY WHERE d.id BETWEEN $minId AND $maxId")
     .rowMapper { rs, _ ->
       DefendantQueryResult(
         id = rs.getInt("id"),
@@ -86,7 +86,8 @@ class DefendantBatchConfig(
         address = rs.getString("address"),
         tsvName = rs.getString("tsv_name"),
         pnc = rs.getString("pnc"),
-        cpr_uuid = rs.getString("cpr_uuid"),
+        cprUUID = rs.getString("cpr_uuid"),
+        fkOffenderId = rs.getObject("fk_offender_id") as Long?,
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),
@@ -106,8 +107,8 @@ class DefendantBatchConfig(
   fun defendantWriter(): JdbcBatchItemWriter<Defendant> = JdbcBatchItemWriterBuilder<Defendant>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.defendant (id, is_manual_update, crn, cro_number, tsv_name, pnc_id, cpr_uuid, is_offender_confirmed, person, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :isManualUpdate, :crn, :croNumber, to_tsvector(:tsvName), :pncId, :cprUuid, :isOffenderConfirmed, CAST(:person AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.defendant (id, is_manual_update, crn, cro_number, tsv_name, pnc_id, cpr_uuid, is_offender_confirmed, person, offender_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :isManualUpdate, :crn, :croNumber, to_tsvector(:tsvName), :pncId, :cprUUID, :isOffenderConfirmed, CAST(:person AS jsonb), :offenderId, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -173,7 +174,7 @@ class DefendantBatchConfig(
     jobLauncher = jobLauncher,
     job = defendantJob,
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
-    batchSize = 5,
+    batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
     jobName = "Defendant",
