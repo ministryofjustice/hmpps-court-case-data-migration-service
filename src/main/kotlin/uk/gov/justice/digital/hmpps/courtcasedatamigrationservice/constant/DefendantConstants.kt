@@ -22,12 +22,13 @@ object DefendantConstants {
     d.address, 
     d.tsv_name, 
     d.pnc,
-    d.cpr_uuid, 
+    d.cpr_uuid,
+    d.fk_offender_id,
     d.created, 
     d.created_by, 
     d.last_updated, 
     d.last_updated_by, 
     d.deleted, 
     d.version
-FROM courtcaseservice.defendant d"""
+    FROM courtcaseservice.defendant d"""
 }

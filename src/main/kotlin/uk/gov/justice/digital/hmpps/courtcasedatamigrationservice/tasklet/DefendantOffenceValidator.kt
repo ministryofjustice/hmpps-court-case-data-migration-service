@@ -2,21 +2,30 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet
 
 import org.springframework.jdbc.core.JdbcTemplate
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SOURCE_QUERY
+import kotlin.collections.firstOrNull
 
 class DefendantOffenceValidator(
   private val sourceJdbcTemplate: JdbcTemplate,
   private val targetJdbcTemplate: JdbcTemplate,
 ) : Validator() {
 
-  // TODO update this query
   override fun fetchSourceIDs(minId: Long, maxId: Long, sampleSize: Int): List<Long> = sourceJdbcTemplate.queryForList(
-    "SELECT id FROM courtcaseservice.offence WHERE id BETWEEN ? AND ? ORDER BY RANDOM() LIMIT ?",
+    """SELECT
+              hd.id
+           FROM
+              courtcaseservice.defendant d
+           JOIN
+              courtcaseservice.hearing_defendant hd ON hd.fk_defendant_id  = d.id
+           JOIN
+              courtcaseservice.offence o ON o.fk_hearing_defendant_id  = hd.id 
+        WHERE hd.id BETWEEN ? AND ? 
+        ORDER BY RANDOM() LIMIT ?""",
     arrayOf(minId, maxId, sampleSize),
     Long::class.java,
   )
 
   override fun fetchSourceRecord(id: Long): Map<String, Any>? = sourceJdbcTemplate.query(
-    "$SOURCE_QUERY WHERE o.id = ?",
+    "$SOURCE_QUERY WHERE hd.id = ?",
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
@@ -32,8 +41,14 @@ class DefendantOffenceValidator(
     )
   }.firstOrNull()
 
-  override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
-    """
+  override fun fetchTargetRecord(id: Long): Map<String, Any>? {
+    val sourceRecord = fetchSourceRecord(id) ?: return null
+
+    val sourceOffenceId = sourceRecord["offence_id"]
+    val sourceDefendantId = sourceRecord["defendant_id"]
+
+    return targetJdbcTemplate.query(
+      """
             select 
             id, 
             offence_id,
@@ -45,22 +60,23 @@ class DefendantOffenceValidator(
             is_deleted,
             version
             from hmpps_court_case_service.defendant_offence
-            where id = ?
-    """.trimIndent(),
-    arrayOf(id),
-  ) { rs, _ ->
-    mapOf(
-      "id" to rs.getLong("id"),
-      "offence_id" to rs.getString("offence_id"),
-      "defendant_id" to rs.getString("defendant_id"),
-      "created_at" to rs.getTimestamp("created_at"),
-      "created_by" to rs.getString("created_by"),
-      "updated_at" to rs.getTimestamp("updated_at"),
-      "updated_by" to rs.getString("updated_by"),
-      "is_deleted" to rs.getBoolean("is_deleted"),
-      "version" to rs.getInt("version"),
-    )
-  }.firstOrNull()
+            where offence_id = ? and defendant_id = ?
+      """.trimIndent(),
+      arrayOf(sourceOffenceId, sourceDefendantId),
+    ) { rs, _ ->
+      mapOf(
+        "id" to rs.getLong("id"),
+        "offence_id" to rs.getInt("offence_id"),
+        "defendant_id" to rs.getInt("defendant_id"),
+        "created_at" to rs.getTimestamp("created_at"),
+        "created_by" to rs.getString("created_by"),
+        "updated_at" to rs.getTimestamp("updated_at"),
+        "updated_by" to rs.getString("updated_by"),
+        "is_deleted" to rs.getBoolean("is_deleted"),
+        "version" to rs.getInt("version"),
+      )
+    }.firstOrNull()
+  }
 
   override fun compareRecords(source: Map<String, Any>, target: Map<String, Any>): List<String> {
     val errors = mutableListOf<String>()
@@ -74,7 +90,6 @@ class DefendantOffenceValidator(
       }
     }
 
-    compare("id", "id", "ID")
     compare("offence_id", "offence_id", "Offence ID")
     compare("defendant_id", "defendant_id", "Defendant ID")
     compare("created", "created_at", "Created")

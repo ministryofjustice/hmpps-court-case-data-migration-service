@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.Defen
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantOffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.DefendantOffence
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.DefendantOffenceListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantOffenceProcessor
@@ -72,7 +73,7 @@ class DefendantOffenceBatchConfig(
     .name("defendantOffenceReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("$SOURCE_QUERY WHERE o.id BETWEEN $minId AND $maxId ORDER BY o.id ASC")
+    .sql("$SOURCE_QUERY WHERE hd.id BETWEEN $minId AND $maxId ORDER BY hd.id ASC")
     .rowMapper { rs, _ ->
       DefendantOffenceQueryResult(
         id = rs.getInt("id"),
@@ -97,8 +98,8 @@ class DefendantOffenceBatchConfig(
   fun defendantOffenceWriter(): JdbcBatchItemWriter<DefendantOffence> = JdbcBatchItemWriterBuilder<DefendantOffence>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.defendant_offence (id, offence_id, defendant_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :offenceId, :defendantId, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.defendant_offence (offence_id, defendant_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:offenceId, :defendantId, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -138,6 +139,11 @@ class DefendantOffenceBatchConfig(
     targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
 
+  @Bean
+  fun defendantOffenceListener(): DefendantOffenceListener = DefendantOffenceListener(
+    targetJdbcTemplate = JdbcTemplate(targetDataSource),
+  )
+
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
     .tasklet(validationTasklet(), transactionManager)
     .build()
@@ -155,6 +161,7 @@ class DefendantOffenceBatchConfig(
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
     .listener(defendantOffenceRowCountListener())
+    .listener(defendantOffenceListener())
     .start(defendantOffenceStep())
     .next(validationStep())
     .build()
@@ -164,7 +171,7 @@ class DefendantOffenceBatchConfig(
     jobLauncher = jobLauncher,
     job = defendantOffenceJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
-    batchSize = 5,
+    batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
     jobName = "DefendantOffence",
