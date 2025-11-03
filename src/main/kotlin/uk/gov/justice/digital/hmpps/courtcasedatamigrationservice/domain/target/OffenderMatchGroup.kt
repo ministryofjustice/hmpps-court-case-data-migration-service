@@ -4,8 +4,8 @@ import java.sql.Timestamp
 
 data class OffenderMatchGroup(
   val id: Int,
-  val defendantId: Int?,
-  val prosecutionCaseId: Int?,
+  val prosecutionCaseId: String?,
+  val defendantId: String?,
   val createdAt: Timestamp?,
   val createdBy: String?,
   val updatedAt: Timestamp?,

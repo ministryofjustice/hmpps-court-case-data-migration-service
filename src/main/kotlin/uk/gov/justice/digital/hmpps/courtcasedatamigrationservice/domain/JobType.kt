@@ -6,4 +6,5 @@ enum class JobType {
   HEARING,
   CASE,
   DEFENDANT_OFFENCE,
+  OFFENDER_MATCH_GROUP,
 }
