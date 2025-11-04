@@ -8,4 +8,5 @@ enum class JobType {
   COURT,
   OFFENDER,
   DEFENDANT_OFFENCE,
+  OFFENDER_MATCH_GROUP,
 }
