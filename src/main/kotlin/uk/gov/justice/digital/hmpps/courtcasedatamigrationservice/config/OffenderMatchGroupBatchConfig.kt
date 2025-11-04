@@ -72,12 +72,12 @@ class OffenderMatchGroupBatchConfig(
     .name("offenderMatchGroupReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("$SOURCE_QUERY WHERE id BETWEEN $minId AND $maxId")
+    .sql("$SOURCE_QUERY WHERE omg.id BETWEEN $minId AND $maxId order by omg.id")
     .rowMapper { rs, _ ->
       OffenderMatchGroupQueryResult(
         id = rs.getInt("id"),
-        caseId = rs.getString("case_id"),
-        defendantId = rs.getString("defendant_id"),
+        caseId = rs.getObject("case_id", Integer::class.java)?.toInt(),
+        defendantId = rs.getObject("defendant_id", Integer::class.java)?.toInt(),
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),

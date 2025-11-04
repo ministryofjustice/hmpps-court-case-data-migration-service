@@ -9,19 +9,23 @@ class OffenderMatchGroupValidator(
 ) : Validator() {
 
   override fun fetchSourceIDs(minId: Long, maxId: Long, sampleSize: Int): List<Long> = sourceJdbcTemplate.queryForList(
-    "SELECT id FROM courtcaseservice.offender_match_group WHERE id BETWEEN ? AND ? ORDER BY RANDOM() LIMIT ?",
+    """
+      select omg.id from courtcaseservice.offender_match_group omg 	join courtcaseservice.court_case cc on (omg.case_id = cc.case_id)
+      join courtcaseservice.defendant d on (nullif(omg.defendant_id, 'null')::uuid = d.defendant_id)
+      where omg.id between ? and ? order by random() limit ?
+    """.trimIndent(),
     arrayOf(minId, maxId, sampleSize),
     Long::class.java,
   )
 
   override fun fetchSourceRecord(id: Long): Map<String, Any>? = sourceJdbcTemplate.query(
-    "$SOURCE_QUERY WHERE id = ?",
+    "$SOURCE_QUERY WHERE omg.id = ?",
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
       "id" to rs.getLong("id"),
-      "urn" to rs.getString("urn"),
-      "source_type" to rs.getString("source_type"),
+      "case_id" to rs.getInt("case_id"),
+      "defendant_id" to rs.getInt("defendant_id"),
       "created" to rs.getTimestamp("created"),
       "created_by" to rs.getString("created_by"),
       "last_updated" to rs.getTimestamp("last_updated"),
@@ -35,29 +39,23 @@ class OffenderMatchGroupValidator(
     """
         select 
         id,
-        case_urn::text AS case_urns_raw,
-        source_type,
-        c_id,
-        case_markers::text AS case_markers_raw,
-        case_documents::text AS case_documents_raw,
+        prosecution_case_id,
+        defendant_id,
         created_at,
         created_by,
         updated_at,
         updated_by,
         is_deleted,
         version
-        from hmpps_court_case_service.prosecution_case
+        from hmpps_court_case_service.offender_match_group
             WHERE id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
       "id" to rs.getLong("id"),
-      "case_urns_raw" to rs.getString("case_urns_raw"),
-      "source_type" to rs.getString("source_type"),
-      "c_id" to rs.getString("c_id"),
-      "case_markers_raw" to rs.getString("case_markers_raw"),
-      "case_documents_raw" to rs.getString("case_documents_raw"),
+      "prosecution_case_id" to rs.getInt("prosecution_case_id"),
+      "defendant_id" to rs.getInt("defendant_id"),
       "created_at" to rs.getTimestamp("created_at"),
       "created_by" to rs.getString("created_by"),
       "updated_at" to rs.getTimestamp("updated_at"),
@@ -78,7 +76,14 @@ class OffenderMatchGroupValidator(
         errors.add("$label mismatch for ID $id: '$sourceValue' vs '$targetValue'")
       }
     }
-    compare("source_type", "source_type", "Source Type")
+    compare("case_id", "prosecution_case_id", "Prosecution Case ID")
+    compare("defendant_id", "defendant_id", "Defendant ID")
+    compare("created", "created_at", "Created")
+    compare("created_by", "created_by", "Created by")
+    compare("last_updated", "updated_at", "Last updated")
+    compare("last_updated_by", "updated_by", "Last updated by")
+    compare("deleted", "is_deleted", "Deleted")
+    compare("version", "version", "Version")
 
     return errors
   }

@@ -6,15 +6,19 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 
 class OffenderMatchGroupProcessor : ItemProcessor<OffenderMatchGroupQueryResult, OffenderMatchGroup> {
 
-  override fun process(offenderMatchGroupQueryResult: OffenderMatchGroupQueryResult): OffenderMatchGroup = OffenderMatchGroup(
-    id = offenderMatchGroupQueryResult.id,
-    defendantId = offenderMatchGroupQueryResult.defendantId,
-    prosecutionCaseId = offenderMatchGroupQueryResult.caseId,
-    createdAt = offenderMatchGroupQueryResult.created,
-    createdBy = offenderMatchGroupQueryResult.createdBy,
-    updatedAt = offenderMatchGroupQueryResult.lastUpdated,
-    updatedBy = offenderMatchGroupQueryResult.lastUpdatedBy,
-    isDeleted = offenderMatchGroupQueryResult.deleted,
-    version = offenderMatchGroupQueryResult.version,
-  )
+  override fun process(offenderMatchGroupQueryResult: OffenderMatchGroupQueryResult): OffenderMatchGroup {
+    // comment to be removed
+
+    return OffenderMatchGroup(
+      id = offenderMatchGroupQueryResult.id,
+      defendantId = offenderMatchGroupQueryResult.defendantId,
+      prosecutionCaseId = offenderMatchGroupQueryResult.caseId,
+      createdAt = offenderMatchGroupQueryResult.created,
+      createdBy = offenderMatchGroupQueryResult.createdBy,
+      updatedAt = offenderMatchGroupQueryResult.lastUpdated,
+      updatedBy = offenderMatchGroupQueryResult.lastUpdatedBy,
+      isDeleted = offenderMatchGroupQueryResult.deleted,
+      version = offenderMatchGroupQueryResult.version,
+    )
+  }
 }
