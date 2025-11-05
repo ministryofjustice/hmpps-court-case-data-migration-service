@@ -29,9 +29,9 @@ import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenceConstants.MAX_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenceConstants.MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenceConstants.SOURCE_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenceConstants.SOURCE_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenceConstants.TARGET_ROW_COUNT_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderConstants.SOURCE_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence
