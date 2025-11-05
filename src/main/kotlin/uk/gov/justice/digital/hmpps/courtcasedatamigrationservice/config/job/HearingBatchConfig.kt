@@ -27,7 +27,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.MAX_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.MIN_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.SOURCE_QUERY
