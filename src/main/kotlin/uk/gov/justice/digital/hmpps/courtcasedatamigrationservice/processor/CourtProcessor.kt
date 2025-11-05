@@ -28,6 +28,7 @@ class CourtProcessor : ItemProcessor<CourtQueryResult, CourtCentre> {
     courtRooms = buildCourtRoomsAsJSONBString(courtQueryResult),
   )
 
+  // TODO review with Sam
   private fun buildCourtRoomsAsJSONBString(courtQueryResult: CourtQueryResult): String? {
     val courtRooms: List<TargetCourtRoom>? = courtQueryResult.courtRooms?.let { json ->
       val results: List<CourtRoom> = objectMapper.readValue(json)
