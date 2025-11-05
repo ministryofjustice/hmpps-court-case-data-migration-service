@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
+package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.job
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
@@ -26,27 +26,24 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.MAX_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.MIN_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.SOURCE_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.SOURCE_ROW_COUNT_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.TARGET_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.HearingQueryResult
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Hearing
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenderMatchGroupQueryResult
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.OffenderMatchGroup
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.HearingProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.OffenderMatchGroupProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.HearingValidator
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.OffenderMatchGroupValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
 import javax.sql.DataSource
 
 @Configuration
 @EnableBatchProcessing
-class HearingBatchConfig(
+class OffenderMatchGroupBatchConfig(
   private val jobRepository: JobRepository,
   private val transactionManager: PlatformTransactionManager,
   @Qualifier("sourceDataSource") private val sourceDataSource: DataSource,
@@ -54,7 +51,7 @@ class HearingBatchConfig(
   private val batchProperties: BatchProperties,
 ) {
 
-  private val log = LoggerFactory.getLogger(HearingBatchConfig::class.java)
+  private val log = LoggerFactory.getLogger(OffenderMatchGroupBatchConfig::class.java)
 
   @Autowired
   lateinit var jobLauncher: JobLauncher
@@ -65,23 +62,19 @@ class HearingBatchConfig(
 
   @Bean
   @StepScope
-  fun hearingReader(
+  fun offenderMatchGroupReader(
     @Value("#{jobParameters['minId']}") minId: Long?,
     @Value("#{jobParameters['maxId']}") maxId: Long?,
-  ): JdbcCursorItemReader<HearingQueryResult> = JdbcCursorItemReaderBuilder<HearingQueryResult>()
-    .name("hearingReader")
+  ): JdbcCursorItemReader<OffenderMatchGroupQueryResult> = JdbcCursorItemReaderBuilder<OffenderMatchGroupQueryResult>()
+    .name("offenderMatchGroupReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("$SOURCE_QUERY WHERE h.id BETWEEN $minId AND $maxId ORDER BY h.id ASC")
+    .sql("${OffenderMatchGroupConstants.SOURCE_QUERY} WHERE omg.id BETWEEN $minId AND $maxId order by omg.id")
     .rowMapper { rs, _ ->
-      HearingQueryResult(
+      OffenderMatchGroupQueryResult(
         id = rs.getInt("id"),
-        hearingType = rs.getString("hearing_type"),
-        hearingEventType = rs.getString("hearing_event_type"),
-        listNo = rs.getString("list_no"),
-        firstCreated = rs.getTimestamp("first_created"),
-        hearingOutcomes = rs.getString("hearing_outcomes"),
-        hearingNotes = rs.getString("hearing_notes"),
+        caseId = rs.getObject("case_id", Integer::class.java)?.toInt(),
+        defendantId = rs.getObject("defendant_id", Integer::class.java)?.toInt(),
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),
@@ -93,53 +86,53 @@ class HearingBatchConfig(
     .build()
 
   @Bean
-  fun hearingProcessor(): ItemProcessor<HearingQueryResult, Hearing> = CompositeItemProcessorBuilder<HearingQueryResult, Hearing>()
-    .delegates(listOf(HearingProcessor()))
+  fun offenderMatchGroupProcessor(): ItemProcessor<OffenderMatchGroupQueryResult, OffenderMatchGroup> = CompositeItemProcessorBuilder<OffenderMatchGroupQueryResult, OffenderMatchGroup>()
+    .delegates(listOf(OffenderMatchGroupProcessor()))
     .build()
 
   @Bean
-  fun hearingWriter(): JdbcBatchItemWriter<Hearing> = JdbcBatchItemWriterBuilder<Hearing>()
+  fun offenderMatchGroupWriter(): JdbcBatchItemWriter<OffenderMatchGroup> = JdbcBatchItemWriterBuilder<OffenderMatchGroup>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.hearing (id, type, event_type, list_number, first_created, hearing_outcome, hearing_case_note, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :type, :eventType, :listNumber, :firstCreated, CAST(:hearingOutcome AS jsonb), CAST(:hearingCaseNote AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.offender_match_group (id, defendant_id, prosecution_case_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :defendantId, :prosecutionCaseId, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
 
   @Bean
-  fun hearingSkipListener() = object : SkipListener<HearingQueryResult, Hearing> {
+  fun offenderMatchGroupSkipListener() = object : SkipListener<OffenderMatchGroupQueryResult, OffenderMatchGroup> {
     override fun onSkipInRead(t: Throwable) {
       log.warn("Skipped during read: ${t.message}")
     }
 
-    override fun onSkipInProcess(item: HearingQueryResult, t: Throwable) {
+    override fun onSkipInProcess(item: OffenderMatchGroupQueryResult, t: Throwable) {
       log.warn("Skipped during process: ${item.id}, reason: ${t.message}")
     }
 
-    override fun onSkipInWrite(item: Hearing, t: Throwable) {
+    override fun onSkipInWrite(item: OffenderMatchGroup, t: Throwable) {
       log.warn("Skipped during write: ${item.id}, reason: ${t.message}")
     }
   }
 
   @Bean
-  fun hearingStep(): Step = StepBuilder("hearingStep", jobRepository)
-    .chunk<HearingQueryResult, Hearing>(batchProperties.chunkSize, transactionManager)
-    .reader(hearingReader(null, null))
-    .processor(hearingProcessor())
-    .writer(hearingWriter())
-    .listener(hearingSkipListener())
+  fun offenderMatchGroupStep(): Step = StepBuilder("offenderMatchGroupStep", jobRepository)
+    .chunk<OffenderMatchGroupQueryResult, OffenderMatchGroup>(batchProperties.chunkSize, transactionManager)
+    .reader(offenderMatchGroupReader(null, null))
+    .processor(offenderMatchGroupProcessor())
+    .writer(offenderMatchGroupWriter())
+    .listener(offenderMatchGroupSkipListener())
     .faultTolerant()
     .retry(Throwable::class.java)
     .retryLimit(3)
     .build()
 
   @Bean
-  fun hearingRowCountListener(): RowCountListener = RowCountListener(
+  fun offenderMatchGroupRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
+    sourceRowCountQuery = OffenderMatchGroupConstants.SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = OffenderMatchGroupConstants.TARGET_ROW_COUNT_QUERY,
   )
 
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
@@ -147,7 +140,7 @@ class HearingBatchConfig(
     .build()
 
   fun validationTasklet(): Tasklet {
-    val strategy = HearingValidator(
+    val strategy = OffenderMatchGroupValidator(
       sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
       targetJdbcTemplate = JdbcTemplate(targetDataSource),
     )
@@ -155,29 +148,32 @@ class HearingBatchConfig(
   }
 
   @Bean
-  fun hearingJob(timerJobListener: TimerJobListener): Job = JobBuilder("hearingJob", jobRepository)
+  fun offenderMatchGroupJob(timerJobListener: TimerJobListener): Job = JobBuilder(
+    "offenderMatchGroupJob",
+    jobRepository,
+  )
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
-    .listener(hearingRowCountListener())
-    .start(hearingStep())
+    .listener(offenderMatchGroupRowCountListener())
+    .start(offenderMatchGroupStep())
     .next(validationStep())
     .build()
 
-  @Bean(name = ["hearingJobService"])
-  fun hearingJobService(@Qualifier("hearingJob") hearingJob: Job): JobService = JobService(
+  @Bean(name = ["offenderMatchGroupJobService"])
+  fun offenderMatchGroupJobService(@Qualifier("offenderMatchGroupJob") offenderMatchGroupJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
-    job = hearingJob,
+    job = offenderMatchGroupJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
-    minQuery = MIN_QUERY,
-    maxQuery = MAX_QUERY,
-    jobName = "Hearing",
+    minQuery = OffenderMatchGroupConstants.MIN_QUERY,
+    maxQuery = OffenderMatchGroupConstants.MAX_QUERY,
+    jobName = "OffenderMatchGroup",
   )
 
   @Bean
-  fun hearingJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(
-    jobService = hearingJobService(hearingJob(timerJobListener)),
-    jobType = JobType.HEARING,
+  fun offenderMatchGroupJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(
+    jobService = offenderMatchGroupJobService(offenderMatchGroupJob(timerJobListener)),
+    jobType = JobType.OFFENDER_MATCH_GROUP,
     schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
   )
 }

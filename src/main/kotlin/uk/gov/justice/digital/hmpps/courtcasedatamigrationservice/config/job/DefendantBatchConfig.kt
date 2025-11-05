@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
+package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.job
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
@@ -26,28 +26,25 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.MAX_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.MIN_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SOURCE_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SOURCE_ROW_COUNT_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.TARGET_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantOffenceQueryResult
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.DefendantOffence
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.DefendantOffenceListener
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantQueryResult
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantOffenceProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantOffenceValidator
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
+import java.time.LocalDate
 import javax.sql.DataSource
 
 @Configuration
 @EnableBatchProcessing
-class DefendantOffenceBatchConfig(
+class DefendantBatchConfig(
   private val jobRepository: JobRepository,
   private val transactionManager: PlatformTransactionManager,
   @Qualifier("sourceDataSource") private val sourceDataSource: DataSource,
@@ -55,30 +52,39 @@ class DefendantOffenceBatchConfig(
   private val batchProperties: BatchProperties,
 ) {
 
-  private val log = LoggerFactory.getLogger(DefendantOffenceBatchConfig::class.java)
+  private val log = LoggerFactory.getLogger(DefendantBatchConfig::class.java)
 
   @Autowired
   lateinit var jobLauncher: JobLauncher
 
-  @Autowired
-  @Qualifier("sourceJdbcTemplate")
-  lateinit var sourceJdbcTemplate: JdbcTemplate
-
   @Bean
   @StepScope
-  fun defendantOffenceReader(
+  fun defendantReader(
     @Value("#{jobParameters['minId']}") minId: Long?,
     @Value("#{jobParameters['maxId']}") maxId: Long?,
-  ): JdbcCursorItemReader<DefendantOffenceQueryResult> = JdbcCursorItemReaderBuilder<DefendantOffenceQueryResult>()
-    .name("defendantOffenceReader")
+  ): JdbcCursorItemReader<DefendantQueryResult> = JdbcCursorItemReaderBuilder<DefendantQueryResult>()
+    .name("defendantReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("$SOURCE_QUERY WHERE hd.id BETWEEN $minId AND $maxId ORDER BY hd.id ASC")
+    .sql("${DefendantConstants.SOURCE_QUERY} WHERE d.id BETWEEN $minId AND $maxId")
     .rowMapper { rs, _ ->
-      DefendantOffenceQueryResult(
+      DefendantQueryResult(
         id = rs.getInt("id"),
-        offenceId = rs.getInt("offence_id"),
-        defendantId = rs.getInt("defendant_id"),
+        isManualUpdate = rs.getBoolean("manual_update"),
+        crn = rs.getString("crn"),
+        cro = rs.getString("cro"),
+        name = rs.getString("name"),
+        dateOfBirth = rs.getObject("date_of_birth", LocalDate::class.java),
+        offenderConfirmed = rs.getBoolean("offender_confirmed"),
+        nationality1 = rs.getString("nationality_1"),
+        nationality2 = rs.getString("nationality_2"),
+        sex = rs.getString("sex"),
+        phoneNumber = rs.getString("phone_number"),
+        address = rs.getString("address"),
+        tsvName = rs.getString("tsv_name"),
+        pnc = rs.getString("pnc"),
+        cprUUID = rs.getString("cpr_uuid"),
+        fkOffenderId = rs.getObject("fk_offender_id") as Long?,
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),
@@ -90,58 +96,53 @@ class DefendantOffenceBatchConfig(
     .build()
 
   @Bean
-  fun defendantOffenceProcessor(): ItemProcessor<DefendantOffenceQueryResult, DefendantOffence> = CompositeItemProcessorBuilder<DefendantOffenceQueryResult, DefendantOffence>()
-    .delegates(listOf(DefendantOffenceProcessor()))
+  fun defendantProcessor(): ItemProcessor<DefendantQueryResult, Defendant> = CompositeItemProcessorBuilder<DefendantQueryResult, Defendant>()
+    .delegates(listOf(DefendantProcessor()))
     .build()
 
   @Bean
-  fun defendantOffenceWriter(): JdbcBatchItemWriter<DefendantOffence> = JdbcBatchItemWriterBuilder<DefendantOffence>()
+  fun defendantWriter(): JdbcBatchItemWriter<Defendant> = JdbcBatchItemWriterBuilder<Defendant>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.defendant_offence (offence_id, defendant_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:offenceId, :defendantId, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.defendant (id, is_manual_update, crn, cro_number, tsv_name, pnc_id, cpr_uuid, is_offender_confirmed, person, offender_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :isManualUpdate, :crn, :croNumber, to_tsvector(:tsvName), :pncId, :cprUUID, :isOffenderConfirmed, CAST(:person AS jsonb), :offenderId, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
 
   @Bean
-  fun defendantOffenceSkipListener() = object : SkipListener<DefendantOffenceQueryResult, DefendantOffence> {
+  fun defendantSkipListener() = object : SkipListener<DefendantQueryResult, Defendant> {
     override fun onSkipInRead(t: Throwable) {
       log.warn("Skipped during read: ${t.message}")
     }
 
-    override fun onSkipInProcess(item: DefendantOffenceQueryResult, t: Throwable) {
+    override fun onSkipInProcess(item: DefendantQueryResult, t: Throwable) {
       log.warn("Skipped during process: ${item.id}, reason: ${t.message}")
     }
 
-    override fun onSkipInWrite(item: DefendantOffence, t: Throwable) {
+    override fun onSkipInWrite(item: Defendant, t: Throwable) {
       log.warn("Skipped during write: ${item.id}, reason: ${t.message}")
     }
   }
 
   @Bean
-  fun defendantOffenceStep(): Step = StepBuilder("defendantOffenceStep", jobRepository)
-    .chunk<DefendantOffenceQueryResult, DefendantOffence>(batchProperties.chunkSize, transactionManager)
-    .reader(defendantOffenceReader(null, null))
-    .processor(defendantOffenceProcessor())
-    .writer(defendantOffenceWriter())
-    .listener(defendantOffenceSkipListener())
+  fun defendantStep(): Step = StepBuilder("defendantStep", jobRepository)
+    .chunk<DefendantQueryResult, Defendant>(batchProperties.chunkSize, transactionManager)
+    .reader(defendantReader(null, null))
+    .processor(defendantProcessor())
+    .writer(defendantWriter())
+    .listener(defendantSkipListener())
     .faultTolerant()
     .retry(Throwable::class.java)
     .retryLimit(3)
     .build()
 
   @Bean
-  fun defendantOffenceRowCountListener(): RowCountListener = RowCountListener(
+  fun defendantRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
-  )
-
-  @Bean
-  fun defendantOffenceListener(): DefendantOffenceListener = DefendantOffenceListener(
-    targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    sourceRowCountQuery = DefendantConstants.SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = DefendantConstants.TARGET_ROW_COUNT_QUERY,
   )
 
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
@@ -149,7 +150,7 @@ class DefendantOffenceBatchConfig(
     .build()
 
   fun validationTasklet(): Tasklet {
-    val strategy = DefendantOffenceValidator(
+    val strategy = DefendantValidator(
       sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
       targetJdbcTemplate = JdbcTemplate(targetDataSource),
     )
@@ -157,30 +158,29 @@ class DefendantOffenceBatchConfig(
   }
 
   @Bean
-  fun defendantOffenceJob(timerJobListener: TimerJobListener): Job = JobBuilder("defendantOffenceJob", jobRepository)
+  fun defendantJob(timerJobListener: TimerJobListener): Job = JobBuilder("defendantJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
-    .listener(defendantOffenceRowCountListener())
-    .listener(defendantOffenceListener())
-    .start(defendantOffenceStep())
+    .listener(defendantRowCountListener())
+    .start(defendantStep())
     .next(validationStep())
     .build()
 
-  @Bean(name = ["defendantOffenceJobService"])
-  fun defendantOffenceJobService(@Qualifier("defendantOffenceJob") defendantOffenceJob: Job): JobService = JobService(
+  @Bean(name = ["defendantJobService"])
+  fun defendantJobService(@Qualifier("defendantJob") defendantJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
-    job = defendantOffenceJob,
-    sourceJdbcTemplate = sourceJdbcTemplate,
+    job = defendantJob,
+    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
-    minQuery = MIN_QUERY,
-    maxQuery = MAX_QUERY,
-    jobName = "DefendantOffence",
+    minQuery = DefendantConstants.MIN_QUERY,
+    maxQuery = DefendantConstants.MAX_QUERY,
+    jobName = "Defendant",
   )
 
   @Bean
-  fun defendantOffenceJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(
-    jobService = defendantOffenceJobService(defendantOffenceJob(timerJobListener)),
-    jobType = JobType.DEFENDANT_OFFENCE,
+  fun defendantJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(
+    jobService = defendantJobService(defendantJob(timerJobListener)),
+    jobType = JobType.DEFENDANT,
     schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
   )
 }

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
+package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.job
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
@@ -26,11 +26,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseConstants.MAX_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseConstants.MIN_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseConstants.SOURCE_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseConstants.SOURCE_ROW_COUNT_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseConstants.TARGET_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseConstants
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.CaseQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.ProsecutionCase
@@ -72,7 +69,7 @@ class CaseBatchConfig(
     .name("caseReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("$SOURCE_QUERY WHERE cc.id BETWEEN $minId AND $maxId")
+    .sql("${CaseConstants.SOURCE_QUERY} WHERE cc.id BETWEEN $minId AND $maxId")
     .rowMapper { rs, _ ->
       CaseQueryResult(
         id = rs.getInt("id"),
@@ -137,8 +134,8 @@ class CaseBatchConfig(
   fun caseRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
+    sourceRowCountQuery = CaseConstants.SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = CaseConstants.TARGET_ROW_COUNT_QUERY,
   )
 
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
@@ -168,8 +165,8 @@ class CaseBatchConfig(
     job = caseJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
-    minQuery = MIN_QUERY,
-    maxQuery = MAX_QUERY,
+    minQuery = CaseConstants.MIN_QUERY,
+    maxQuery = CaseConstants.MAX_QUERY,
     jobName = "Case",
   )
 
