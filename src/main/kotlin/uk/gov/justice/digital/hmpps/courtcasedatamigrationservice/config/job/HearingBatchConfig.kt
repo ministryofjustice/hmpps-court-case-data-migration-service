@@ -28,6 +28,11 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.SOURCE_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.HearingQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Hearing
@@ -69,7 +74,7 @@ class HearingBatchConfig(
     .name("hearingReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("${HearingConstants.SOURCE_QUERY} WHERE h.id BETWEEN $minId AND $maxId ORDER BY h.id ASC")
+    .sql("${SOURCE_QUERY} WHERE h.id BETWEEN $minId AND $maxId ORDER BY h.id ASC")
     .rowMapper { rs, _ ->
       HearingQueryResult(
         id = rs.getInt("id"),
@@ -135,8 +140,8 @@ class HearingBatchConfig(
   fun hearingRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = HearingConstants.SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = HearingConstants.TARGET_ROW_COUNT_QUERY,
+    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
 
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
@@ -166,8 +171,8 @@ class HearingBatchConfig(
     job = hearingJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
-    minQuery = HearingConstants.MIN_QUERY,
-    maxQuery = HearingConstants.MAX_QUERY,
+    minQuery = MIN_QUERY,
+    maxQuery = MAX_QUERY,
     jobName = "Hearing",
   )
 

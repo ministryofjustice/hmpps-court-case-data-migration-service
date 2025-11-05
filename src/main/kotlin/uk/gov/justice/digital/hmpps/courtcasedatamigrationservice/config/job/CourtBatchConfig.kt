@@ -28,6 +28,11 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CourtConstants
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CourtConstants.MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CourtConstants.MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CourtConstants.SOURCE_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CourtConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CourtConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.CourtQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.CourtCentre
@@ -69,7 +74,7 @@ class CourtBatchConfig(
     .name("courtReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("${CourtConstants.SOURCE_QUERY} WHERE c.id BETWEEN $minId AND $maxId order by c.id asc")
+    .sql("${SOURCE_QUERY} WHERE c.id BETWEEN $minId AND $maxId order by c.id asc")
     .rowMapper { rs, _ ->
       CourtQueryResult(
         id = rs.getInt("id"),
@@ -132,8 +137,8 @@ class CourtBatchConfig(
   fun courtRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = CourtConstants.SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = CourtConstants.TARGET_ROW_COUNT_QUERY,
+    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
 
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
@@ -163,8 +168,8 @@ class CourtBatchConfig(
     job = courtJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
-    minQuery = CourtConstants.MIN_QUERY,
-    maxQuery = CourtConstants.MAX_QUERY,
+    minQuery = MIN_QUERY,
+    maxQuery = MAX_QUERY,
     jobName = "Court",
   )
 

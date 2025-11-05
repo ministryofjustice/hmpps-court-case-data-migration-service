@@ -28,6 +28,11 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchConstants
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchConstants.MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchConstants.MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchConstants.SOURCE_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenderMatchQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.OffenderMatch
@@ -69,7 +74,7 @@ class OffenderMatchBatchConfig(
     .name("offenderMatchReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("${OffenderMatchConstants.SOURCE_QUERY} WHERE om.id BETWEEN $minId AND $maxId order by om.id asc")
+    .sql("${SOURCE_QUERY} WHERE om.id BETWEEN $minId AND $maxId order by om.id asc")
     .rowMapper { rs, _ ->
       OffenderMatchQueryResult(
         id = rs.getInt("id"),
@@ -135,8 +140,8 @@ class OffenderMatchBatchConfig(
   fun offenderMatchRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = OffenderMatchConstants.SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = OffenderMatchConstants.TARGET_ROW_COUNT_QUERY,
+    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
 
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
@@ -166,8 +171,8 @@ class OffenderMatchBatchConfig(
     job = offenderMatchJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
-    minQuery = OffenderMatchConstants.MIN_QUERY,
-    maxQuery = OffenderMatchConstants.MAX_QUERY,
+    minQuery = MIN_QUERY,
+    maxQuery = MAX_QUERY,
     jobName = "OffenderMatch",
   )
 

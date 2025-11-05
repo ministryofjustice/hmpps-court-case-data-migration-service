@@ -27,7 +27,11 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SOURCE_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenderMatchGroupQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.OffenderMatchGroup
@@ -69,7 +73,7 @@ class OffenderMatchGroupBatchConfig(
     .name("offenderMatchGroupReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("${OffenderMatchGroupConstants.SOURCE_QUERY} WHERE omg.id BETWEEN $minId AND $maxId order by omg.id")
+    .sql("$SOURCE_QUERY WHERE omg.id BETWEEN $minId AND $maxId order by omg.id")
     .rowMapper { rs, _ ->
       OffenderMatchGroupQueryResult(
         id = rs.getInt("id"),
@@ -131,8 +135,8 @@ class OffenderMatchGroupBatchConfig(
   fun offenderMatchGroupRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = OffenderMatchGroupConstants.SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = OffenderMatchGroupConstants.TARGET_ROW_COUNT_QUERY,
+    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
 
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
@@ -165,8 +169,8 @@ class OffenderMatchGroupBatchConfig(
     job = offenderMatchGroupJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
-    minQuery = OffenderMatchGroupConstants.MIN_QUERY,
-    maxQuery = OffenderMatchGroupConstants.MAX_QUERY,
+    minQuery = MIN_QUERY,
+    maxQuery = MAX_QUERY,
     jobName = "OffenderMatchGroup",
   )
 

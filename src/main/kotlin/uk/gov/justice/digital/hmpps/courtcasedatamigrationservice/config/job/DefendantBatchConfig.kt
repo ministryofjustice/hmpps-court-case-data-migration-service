@@ -28,6 +28,11 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SOURCE_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
@@ -66,7 +71,7 @@ class DefendantBatchConfig(
     .name("defendantReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("${DefendantConstants.SOURCE_QUERY} WHERE d.id BETWEEN $minId AND $maxId")
+    .sql("${SOURCE_QUERY} WHERE d.id BETWEEN $minId AND $maxId")
     .rowMapper { rs, _ ->
       DefendantQueryResult(
         id = rs.getInt("id"),
@@ -141,8 +146,8 @@ class DefendantBatchConfig(
   fun defendantRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = DefendantConstants.SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = DefendantConstants.TARGET_ROW_COUNT_QUERY,
+    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
 
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
@@ -172,8 +177,8 @@ class DefendantBatchConfig(
     job = defendantJob,
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
-    minQuery = DefendantConstants.MIN_QUERY,
-    maxQuery = DefendantConstants.MAX_QUERY,
+    minQuery = MIN_QUERY,
+    maxQuery = MAX_QUERY,
     jobName = "Defendant",
   )
 

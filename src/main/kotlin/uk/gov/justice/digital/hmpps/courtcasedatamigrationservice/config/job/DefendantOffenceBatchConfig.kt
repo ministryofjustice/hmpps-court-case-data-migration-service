@@ -28,6 +28,11 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SOURCE_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantOffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.DefendantOffence
@@ -70,7 +75,7 @@ class DefendantOffenceBatchConfig(
     .name("defendantOffenceReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("${DefendantOffenceConstants.SOURCE_QUERY} WHERE hd.id BETWEEN $minId AND $maxId ORDER BY hd.id ASC")
+    .sql("${SOURCE_QUERY} WHERE hd.id BETWEEN $minId AND $maxId ORDER BY hd.id ASC")
     .rowMapper { rs, _ ->
       DefendantOffenceQueryResult(
         id = rs.getInt("id"),
@@ -132,8 +137,8 @@ class DefendantOffenceBatchConfig(
   fun defendantOffenceRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = DefendantOffenceConstants.SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = DefendantOffenceConstants.TARGET_ROW_COUNT_QUERY,
+    sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
 
   @Bean
@@ -169,8 +174,8 @@ class DefendantOffenceBatchConfig(
     job = defendantOffenceJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
-    minQuery = DefendantOffenceConstants.MIN_QUERY,
-    maxQuery = DefendantOffenceConstants.MAX_QUERY,
+    minQuery = MIN_QUERY,
+    maxQuery = MAX_QUERY,
     jobName = "DefendantOffence",
   )
 
