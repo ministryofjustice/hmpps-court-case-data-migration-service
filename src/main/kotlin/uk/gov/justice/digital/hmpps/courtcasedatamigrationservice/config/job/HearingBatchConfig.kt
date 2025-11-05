@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
+package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.job
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
@@ -26,27 +26,28 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderConstants.MAX_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderConstants.MIN_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderConstants.SOURCE_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderConstants.SOURCE_ROW_COUNT_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderConstants.TARGET_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.SOURCE_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.HearingConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenderQueryResult
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offender
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.HearingQueryResult
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Hearing
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.OffenderProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.HearingProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.OffenderValidator
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.HearingValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
 import javax.sql.DataSource
 
 @Configuration
 @EnableBatchProcessing
-class OffenderBatchConfig(
+class HearingBatchConfig(
   private val jobRepository: JobRepository,
   private val transactionManager: PlatformTransactionManager,
   @Qualifier("sourceDataSource") private val sourceDataSource: DataSource,
@@ -54,7 +55,7 @@ class OffenderBatchConfig(
   private val batchProperties: BatchProperties,
 ) {
 
-  private val log = LoggerFactory.getLogger(OffenderBatchConfig::class.java)
+  private val log = LoggerFactory.getLogger(HearingBatchConfig::class.java)
 
   @Autowired
   lateinit var jobLauncher: JobLauncher
@@ -65,23 +66,23 @@ class OffenderBatchConfig(
 
   @Bean
   @StepScope
-  fun offenderReader(
+  fun hearingReader(
     @Value("#{jobParameters['minId']}") minId: Long?,
     @Value("#{jobParameters['maxId']}") maxId: Long?,
-  ): JdbcCursorItemReader<OffenderQueryResult> = JdbcCursorItemReaderBuilder<OffenderQueryResult>()
-    .name("offenderReader")
+  ): JdbcCursorItemReader<HearingQueryResult> = JdbcCursorItemReaderBuilder<HearingQueryResult>()
+    .name("hearingReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("$SOURCE_QUERY WHERE o.id BETWEEN $minId AND $maxId order by id asc")
+    .sql("${SOURCE_QUERY} WHERE h.id BETWEEN $minId AND $maxId ORDER BY h.id ASC")
     .rowMapper { rs, _ ->
-      OffenderQueryResult(
+      HearingQueryResult(
         id = rs.getInt("id"),
-        suspendedSentenceOrder = rs.getBoolean("suspended_sentence_order"),
-        breach = rs.getBoolean("breach"),
-        awaitingPSR = rs.getBoolean("awaiting_psr"),
-        probationStatus = rs.getString("probation_status"),
-        preSentenceActivity = rs.getBoolean("pre_sentence_activity"),
-        previouslyKnownTerminationDate = rs.getDate("previously_known_termination_date"),
+        hearingType = rs.getString("hearing_type"),
+        hearingEventType = rs.getString("hearing_event_type"),
+        listNo = rs.getString("list_no"),
+        firstCreated = rs.getTimestamp("first_created"),
+        hearingOutcomes = rs.getString("hearing_outcomes"),
+        hearingNotes = rs.getString("hearing_notes"),
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),
@@ -93,49 +94,49 @@ class OffenderBatchConfig(
     .build()
 
   @Bean
-  fun offenderProcessor(): ItemProcessor<OffenderQueryResult, Offender> = CompositeItemProcessorBuilder<OffenderQueryResult, Offender>()
-    .delegates(listOf(OffenderProcessor()))
+  fun hearingProcessor(): ItemProcessor<HearingQueryResult, Hearing> = CompositeItemProcessorBuilder<HearingQueryResult, Hearing>()
+    .delegates(listOf(HearingProcessor()))
     .build()
 
   @Bean
-  fun offenderWriter(): JdbcBatchItemWriter<Offender> = JdbcBatchItemWriterBuilder<Offender>()
+  fun hearingWriter(): JdbcBatchItemWriter<Hearing> = JdbcBatchItemWriterBuilder<Hearing>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.offender (id, suspended_sentence_order, breach, awaiting_psr, probation_status, pre_sentence_activity, previously_known_termination_date, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :suspendedSentenceOrder, :breach, :awaitingPSR, :probationStatus, :preSentenceActivity, :previouslyKnownTerminationDate, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.hearing (id, type, event_type, list_number, first_created, hearing_outcome, hearing_case_note, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :type, :eventType, :listNumber, :firstCreated, CAST(:hearingOutcome AS jsonb), CAST(:hearingCaseNote AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
 
   @Bean
-  fun offenderSkipListener() = object : SkipListener<OffenderQueryResult, Offender> {
+  fun hearingSkipListener() = object : SkipListener<HearingQueryResult, Hearing> {
     override fun onSkipInRead(t: Throwable) {
       log.warn("Skipped during read: ${t.message}")
     }
 
-    override fun onSkipInProcess(item: OffenderQueryResult, t: Throwable) {
+    override fun onSkipInProcess(item: HearingQueryResult, t: Throwable) {
       log.warn("Skipped during process: ${item.id}, reason: ${t.message}")
     }
 
-    override fun onSkipInWrite(item: Offender, t: Throwable) {
+    override fun onSkipInWrite(item: Hearing, t: Throwable) {
       log.warn("Skipped during write: ${item.id}, reason: ${t.message}")
     }
   }
 
   @Bean
-  fun offenderStep(): Step = StepBuilder("offenderStep", jobRepository)
-    .chunk<OffenderQueryResult, Offender>(batchProperties.chunkSize, transactionManager)
-    .reader(offenderReader(null, null))
-    .processor(offenderProcessor())
-    .writer(offenderWriter())
-    .listener(offenderSkipListener())
+  fun hearingStep(): Step = StepBuilder("hearingStep", jobRepository)
+    .chunk<HearingQueryResult, Hearing>(batchProperties.chunkSize, transactionManager)
+    .reader(hearingReader(null, null))
+    .processor(hearingProcessor())
+    .writer(hearingWriter())
+    .listener(hearingSkipListener())
     .faultTolerant()
     .retry(Throwable::class.java)
     .retryLimit(3)
     .build()
 
   @Bean
-  fun offenderRowCountListener(): RowCountListener = RowCountListener(
+  fun hearingRowCountListener(): RowCountListener = RowCountListener(
     sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
     targetJdbcTemplate = JdbcTemplate(targetDataSource),
     sourceRowCountQuery = SOURCE_ROW_COUNT_QUERY,
@@ -147,7 +148,7 @@ class OffenderBatchConfig(
     .build()
 
   fun validationTasklet(): Tasklet {
-    val strategy = OffenderValidator(
+    val strategy = HearingValidator(
       sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
       targetJdbcTemplate = JdbcTemplate(targetDataSource),
     )
@@ -155,29 +156,29 @@ class OffenderBatchConfig(
   }
 
   @Bean
-  fun offenderJob(timerJobListener: TimerJobListener): Job = JobBuilder("offenderJob", jobRepository)
+  fun hearingJob(timerJobListener: TimerJobListener): Job = JobBuilder("hearingJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
-    .listener(offenderRowCountListener())
-    .start(offenderStep())
+    .listener(hearingRowCountListener())
+    .start(hearingStep())
     .next(validationStep())
     .build()
 
-  @Bean(name = ["offenderJobService"])
-  fun offenderJobService(@Qualifier("offenderJob") offenderJob: Job): JobService = JobService(
+  @Bean(name = ["hearingJobService"])
+  fun hearingJobService(@Qualifier("hearingJob") hearingJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
-    job = offenderJob,
+    job = hearingJob,
     sourceJdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
-    jobName = "Offender",
+    jobName = "Hearing",
   )
 
   @Bean
-  fun offenderJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(
-    jobService = offenderJobService(offenderJob(timerJobListener)),
-    jobType = JobType.OFFENDER,
+  fun hearingJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = JobScheduler(
+    jobService = hearingJobService(hearingJob(timerJobListener)),
+    jobType = JobType.HEARING,
     schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
   )
 }

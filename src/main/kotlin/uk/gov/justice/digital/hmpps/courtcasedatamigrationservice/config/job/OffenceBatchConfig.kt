@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config
+package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.job
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.Job
@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.PlatformTransactionManager
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.config.BatchProperties
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenceConstants.MAX_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenceConstants.MIN_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenceConstants.SOURCE_QUERY
@@ -72,7 +73,7 @@ class OffenceBatchConfig(
     .name("offenceReader")
     .dataSource(sourceDataSource)
     .fetchSize(3000)
-    .sql("$SOURCE_QUERY WHERE o.id BETWEEN $minId AND $maxId")
+    .sql("${SOURCE_QUERY} WHERE o.id BETWEEN $minId AND $maxId")
     .rowMapper { rs, _ ->
       OffenceQueryResult(
         id = rs.getInt("id"),
