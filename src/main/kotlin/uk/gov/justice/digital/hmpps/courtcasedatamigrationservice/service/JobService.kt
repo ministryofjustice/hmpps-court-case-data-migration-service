@@ -16,7 +16,7 @@ import java.util.*
 class JobService(
   private val jobLauncher: JobLauncher,
   private val job: Job,
-  private val sourceJdbcTemplate: JdbcTemplate,
+  private val jdbcTemplate: JdbcTemplate,
   private val batchSize: Int,
   private val minQuery: String,
   private val maxQuery: String,
@@ -32,8 +32,8 @@ class JobService(
   fun runJob(): ResponseEntity<String> = try {
     beforeJob()
 
-    val minId = sourceJdbcTemplate.queryForObject(this.minQuery, Long::class.java)
-    val maxId = sourceJdbcTemplate.queryForObject(this.maxQuery, Long::class.java)
+    val minId = jdbcTemplate.queryForObject(this.minQuery, Long::class.java)
+    val maxId = jdbcTemplate.queryForObject(this.maxQuery, Long::class.java)
 
     log.info("Retrieved min ID: $minId")
     log.info("Retrieved max ID: $maxId")

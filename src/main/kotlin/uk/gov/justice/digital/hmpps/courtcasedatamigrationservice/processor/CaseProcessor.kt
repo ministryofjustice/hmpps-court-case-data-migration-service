@@ -2,8 +2,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import com.github.f4b6a3.uuid.UuidCreator
 import org.springframework.batch.item.ItemProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.CaseDocument
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.CaseMarker
@@ -17,31 +16,24 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 
 class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
 
-  private companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
-  }
-
   private val objectMapper = jacksonObjectMapper()
 
-  override fun process(caseQueryResult: CaseQueryResult): ProsecutionCase {
-//    log.info("Processing case: {}", caseQueryResult.id)
-
-    return ProsecutionCase(
-      id = caseQueryResult.id,
-      caseId = caseQueryResult.caseId,
-      caseURN = buildCaseURNAsJSONBString(caseQueryResult),
-      sourceType = caseQueryResult.sourceType,
-      cID = null,
-      caseMarkers = buildCaseMarkersAsJSONBString(caseQueryResult),
-      caseDocuments = buildCaseDocumentsAsJSONBString(caseQueryResult),
-      createdAt = caseQueryResult.created,
-      createdBy = caseQueryResult.createdBy,
-      updatedAt = caseQueryResult.lastUpdated,
-      updatedBy = caseQueryResult.lastUpdatedBy,
-      isDeleted = caseQueryResult.deleted,
-      version = caseQueryResult.version,
-    )
-  }
+  override fun process(caseQueryResult: CaseQueryResult): ProsecutionCase = ProsecutionCase(
+    id = UuidCreator.getTimeOrderedEpochPlus1(),
+    legacyID = caseQueryResult.id.toLong(),
+    caseID = caseQueryResult.caseId,
+    caseURN = buildCaseURNAsJSONBString(caseQueryResult),
+    sourceType = caseQueryResult.sourceType,
+    cID = null,
+    caseMarkers = buildCaseMarkersAsJSONBString(caseQueryResult),
+    caseDocuments = buildCaseDocumentsAsJSONBString(caseQueryResult),
+    createdAt = caseQueryResult.created,
+    createdBy = caseQueryResult.createdBy,
+    updatedAt = caseQueryResult.lastUpdated,
+    updatedBy = caseQueryResult.lastUpdatedBy,
+    isDeleted = caseQueryResult.deleted,
+    version = caseQueryResult.version,
+  )
 
   // TODO change this to a list? Check id is not required here
   private fun buildCaseURNAsJSONBString(
@@ -73,7 +65,7 @@ class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
       results.map { result ->
         TargetCaseMarker(
           id = result.id,
-          typeId = null,
+          typeID = null,
           typeCode = null,
           typeDescription = result.typeDescription,
           createdAt = normalizeIsoDateTime(result.created),
@@ -94,7 +86,7 @@ class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
       results.map { result ->
         TargetCaseDocument(
           id = result.id,
-          documentId = result.documentId,
+          documentID = result.documentId,
           documentName = result.documentName,
           createdAt = normalizeIsoDateTime(result.created),
           createdBy = result.createdBy,

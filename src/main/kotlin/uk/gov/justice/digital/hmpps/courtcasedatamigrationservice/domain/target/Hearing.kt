@@ -1,9 +1,11 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
 import java.sql.Timestamp
+import java.util.UUID
 
 data class Hearing(
-  val id: Int,
+  val id: UUID,
+  val legacyID: Long?,
   val type: String?,
   val eventType: String?,
   val listNumber: String?,

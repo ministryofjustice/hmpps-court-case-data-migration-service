@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
 data class HearingCaseNote(
   val id: Int,
-  val defendantId: String?,
+  val defendantID: String?,
   val note: String?,
   val author: String?,
   val isDraft: Boolean?,

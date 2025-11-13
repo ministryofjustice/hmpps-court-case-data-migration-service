@@ -1,10 +1,13 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
+import java.util.UUID
+
 data class JudicialResult(
-  val id: Int,
+  val id: UUID,
+  val legacyID: Long?,
   val isConvictedResult: Boolean?,
   val label: String?,
-  val resultTypeId: String?,
+  val resultTypeID: String?,
   val resultText: String?,
   val isJudicialResultDeleted: Boolean?,
   val createdAt: String?,

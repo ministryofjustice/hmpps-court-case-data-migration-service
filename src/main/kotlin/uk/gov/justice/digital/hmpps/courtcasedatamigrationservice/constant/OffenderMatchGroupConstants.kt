@@ -83,4 +83,28 @@ object OffenderMatchGroupConstants {
           ) cc ON true
           JOIN courtcaseservice.defendant d 
               ON (NULLIF(omg.defendant_id, 'null')::uuid = d.defendant_id)"""
+
+  const val SYNC_DEFENDANT_ID_MIN_QUERY = "SELECT MIN(legacy_id) FROM hmpps_court_case_service.defendant"
+  const val SYNC_DEFENDANT_ID_MAX_QUERY = "SELECT MAX(legacy_id) FROM hmpps_court_case_service.defendant"
+  const val SYNC_DEFENDANT_ID_SOURCE_ROW_COUNT_QUERY = "select count(*) from courtcaseservice.defendant"
+  const val SYNC_DEFENDANT_ID_TARGET_ROW_COUNT_QUERY = "select count(*) from hmpps_court_case_service.defendant_offence where defendant_id is not null" // TODO review this
+
+  const val SYNC_DEFENDANT_ID_QUERY = """        
+      SELECT
+      d.id,
+      d.legacy_id
+     FROM
+        hmpps_court_case_service.defendant d"""
+
+  const val SYNC_PROSECUTION_CASE_ID_MIN_QUERY = "SELECT MIN(legacy_id) FROM hmpps_court_case_service.defendant"
+  const val SYNC_PROSECUTION_CASE_ID_MAX_QUERY = "SELECT MAX(legacy_id) FROM hmpps_court_case_service.defendant"
+  const val SYNC_PROSECUTION_CASE_ID_SOURCE_ROW_COUNT_QUERY = "select count(*) from courtcaseservice.defendant"
+  const val SYNC_PROSECUTION_CASE_ID_TARGET_ROW_COUNT_QUERY = "select count(*) from hmpps_court_case_service.defendant_offence where defendant_id is not null" // TODO review this
+
+  const val SYNC_PROSECUTION_CASE_ID_QUERY = """        
+      SELECT
+      pc.id,
+      pc.legacy_id
+     FROM
+        hmpps_court_case_service.prosecution_case pc"""
 }

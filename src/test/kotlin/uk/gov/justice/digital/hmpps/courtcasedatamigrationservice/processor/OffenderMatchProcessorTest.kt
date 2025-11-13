@@ -23,7 +23,7 @@ class OffenderMatchProcessorTest {
   fun `should map offenderMatchQueryResult to offenderMatch`() {
     val offenderMatchQueryResult = OffenderMatchQueryResult(
       id = 1,
-      offenderId = 100L,
+      fkOffenderId = 100L,
       groupId = 150L,
       matchType = "NAME_DOB_PNC",
       aliases = """[{"gender": "Male", "surname": "Magnusson", "firstName": "Victor", "dateOfBirth": "1997-02-28", "middleNames": []}]""",
@@ -39,9 +39,9 @@ class OffenderMatchProcessorTest {
 
     val offenderMatch = processor.process(offenderMatchQueryResult)
 
-    assertThat(offenderMatch.id).isEqualTo(1)
-    assertThat(offenderMatch.offenderId).isEqualTo(100L)
-    assertThat(offenderMatch.offenderMatchGroupId).isEqualTo(150L)
+    assertThat(offenderMatch.legacyID).isEqualTo(1)
+    assertThat(offenderMatch.offenderID).isNull()
+    assertThat(offenderMatch.offenderMatchGroupID).isNull()
     assertThat(offenderMatch.matchType).isEqualTo("NAME_DOB_PNC")
     assertThat(offenderMatch.aliases).isEqualTo("""[{"gender": "Male", "surname": "Magnusson", "firstName": "Victor", "dateOfBirth": "1997-02-28", "middleNames": []}]""")
     assertThat(offenderMatch.isRejected).isEqualTo(true)

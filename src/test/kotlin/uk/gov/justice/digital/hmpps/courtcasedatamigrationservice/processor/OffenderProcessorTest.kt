@@ -42,7 +42,7 @@ class OffenderProcessorTest {
 
     val offender = processor.process(offenderQueryResult)
 
-    assertThat(offender.id).isEqualTo(1)
+    assertThat(offender.legacyID).isEqualTo(1)
     assertThat(offender.suspendedSentenceOrder).isEqualTo(true)
     assertThat(offender.breach).isEqualTo(false)
     assertThat(offender.awaitingPSR).isEqualTo(true)

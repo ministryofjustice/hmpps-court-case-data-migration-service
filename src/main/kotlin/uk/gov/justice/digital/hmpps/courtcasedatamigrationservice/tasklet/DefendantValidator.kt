@@ -136,12 +136,12 @@ class DefendantValidator(
         is_deleted,
         version
     FROM hmpps_court_case_service.defendant
-    WHERE id = ?
+    WHERE legacy_id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-      "id" to rs.getLong("id"),
+//      "id" to rs.getLong("id"), // TODO fix this
       "is_manual_update" to rs.getBoolean("is_manual_update"),
       "crn" to rs.getString("crn"),
       "cro_number" to rs.getString("cro_number"),

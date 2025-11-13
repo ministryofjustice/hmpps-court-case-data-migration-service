@@ -31,7 +31,7 @@ class DefendantOffenceValidator(
     mapOf(
       "id" to rs.getInt("id"),
       "offence_id" to rs.getInt("offence_id"),
-      "defendant_id" to rs.getInt("defendant_id"),
+      "legacy_defendant_id" to rs.getInt("legacy_defendant_id"),
       "created" to rs.getTimestamp("created"),
       "created_by" to rs.getString("created_by"),
       "last_updated" to rs.getTimestamp("last_updated"),
@@ -45,14 +45,14 @@ class DefendantOffenceValidator(
     val sourceRecord = fetchSourceRecord(id) ?: return null
 
     val sourceOffenceId = sourceRecord["offence_id"]
-    val sourceDefendantId = sourceRecord["defendant_id"]
+    val sourceDefendantId = sourceRecord["legacy_defendant_id"]
 
     return targetJdbcTemplate.query(
       """
             select 
             id, 
             offence_id,
-            defendant_id,
+            legacy_defendant_id,
             created_at,
             created_by,
             updated_at,
@@ -60,14 +60,14 @@ class DefendantOffenceValidator(
             is_deleted,
             version
             from hmpps_court_case_service.defendant_offence
-            where offence_id = ? and defendant_id = ?
+            where offence_id = ? and legacy_defendant_id = ?
       """.trimIndent(),
       arrayOf(sourceOffenceId, sourceDefendantId),
     ) { rs, _ ->
       mapOf(
-        "id" to rs.getLong("id"),
+//        "id" to rs.getLong("id"), // TODO fix this
         "offence_id" to rs.getInt("offence_id"),
-        "defendant_id" to rs.getInt("defendant_id"),
+        "legacy_defendant_id" to rs.getInt("legacy_defendant_id"),
         "created_at" to rs.getTimestamp("created_at"),
         "created_by" to rs.getString("created_by"),
         "updated_at" to rs.getTimestamp("updated_at"),
@@ -91,7 +91,7 @@ class DefendantOffenceValidator(
     }
 
     compare("offence_id", "offence_id", "Offence ID")
-    compare("defendant_id", "defendant_id", "Defendant ID")
+    compare("legacy_defendant_id", "legacy_defendant_id", "Defendant ID")
     compare("created", "created_at", "Created")
     compare("created_by", "created_by", "Created by")
     compare("last_updated", "updated_at", "Last updated")

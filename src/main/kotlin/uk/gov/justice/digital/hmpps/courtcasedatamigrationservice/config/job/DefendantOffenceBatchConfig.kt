@@ -31,19 +31,33 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.Defen
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.MIN_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SOURCE_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_DEFENDANT_ID_MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_DEFENDANT_ID_MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_DEFENDANT_ID_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_DEFENDANT_ID_SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_DEFENDANT_ID_TARGET_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_OFFENCE_ID_MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_OFFENCE_ID_MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_OFFENCE_ID_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_OFFENCE_ID_SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.SYNC_OFFENCE_ID_TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantOffenceConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantOffenceQueryResult
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.DefendantOffence
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.DefendantOffenceListener
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offence
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantOffenceProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.SyncDefendantIdInDefendantOffenceProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.SyncOffenceIdInDefendantOffenceProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantOffenceValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
+import java.util.UUID
 import javax.sql.DataSource
 
 @Configuration
@@ -78,8 +92,8 @@ class DefendantOffenceBatchConfig(
     .rowMapper { rs, _ ->
       DefendantOffenceQueryResult(
         id = rs.getInt("id"),
-        offenceId = rs.getInt("offence_id"),
-        defendantId = rs.getInt("defendant_id"),
+        legacyOffenceId = rs.getInt("legacy_offence_id"),
+        legacyDefendantId = rs.getInt("legacy_defendant_id"),
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),
@@ -99,8 +113,8 @@ class DefendantOffenceBatchConfig(
   fun defendantOffenceWriter(): JdbcBatchItemWriter<DefendantOffence> = JdbcBatchItemWriterBuilder<DefendantOffence>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.defendant_offence (offence_id, defendant_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:offenceId, :defendantId, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.defendant_offence (id, offence_id, defendant_id, legacy_offence_id, legacy_defendant_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :offenceID, :defendantID, :legacyOffenceID, :legacyDefendantID, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -140,11 +154,6 @@ class DefendantOffenceBatchConfig(
     targetRowCountQuery = TARGET_ROW_COUNT_QUERY,
   )
 
-  @Bean
-  fun defendantOffenceListener(): DefendantOffenceListener = DefendantOffenceListener(
-    targetJdbcTemplate = JdbcTemplate(targetDataSource),
-  )
-
   fun validationStep(): Step = StepBuilder("validationStep", jobRepository)
     .tasklet(validationTasklet(), transactionManager)
     .build()
@@ -162,16 +171,15 @@ class DefendantOffenceBatchConfig(
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
     .listener(defendantOffenceRowCountListener())
-    .listener(defendantOffenceListener())
     .start(defendantOffenceStep())
-    .next(validationStep())
+//    .next(validationStep())
     .build()
 
   @Bean(name = ["defendantOffenceJobService"])
   fun defendantOffenceJobService(@Qualifier("defendantOffenceJob") defendantOffenceJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = defendantOffenceJob,
-    sourceJdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
@@ -184,4 +192,197 @@ class DefendantOffenceBatchConfig(
     jobType = JobType.DEFENDANT_OFFENCE,
     schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
   )
+
+  /**
+   *
+   *
+   * Update DefendantID FK job below.
+   *
+   *
+   *
+   */
+
+  @Bean
+  fun syncDefendantIdInDefendantOffenceRowCountListener(): RowCountListener = RowCountListener(
+    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+    targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    sourceRowCountQuery = SYNC_DEFENDANT_ID_SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = SYNC_DEFENDANT_ID_TARGET_ROW_COUNT_QUERY,
+  )
+
+  @Bean(name = ["syncDefendantIdInDefendantOffenceJobService"])
+  fun syncDefendantIdInDefendantOffenceJobService(@Qualifier("syncDefendantIdInDefendantOffenceJob") syncDefendantIdInDefendantOffenceJob: Job): JobService = JobService(
+    jobLauncher = jobLauncher,
+    job = syncDefendantIdInDefendantOffenceJob,
+    jdbcTemplate = JdbcTemplate(targetDataSource),
+    batchSize = 15,
+    minQuery = SYNC_DEFENDANT_ID_MIN_QUERY,
+    maxQuery = SYNC_DEFENDANT_ID_MAX_QUERY,
+    jobName = "syncDefendantIdInDefendantOffence",
+  )
+
+  @Bean
+  fun syncDefendantIdInDefendantOffenceJob(timerJobListener: TimerJobListener): Job = JobBuilder("syncDefendantIdInDefendantOffenceJob", jobRepository)
+    .incrementer(RunIdIncrementer())
+    .listener(timerJobListener)
+    .listener(syncDefendantIdInDefendantOffenceRowCountListener())
+    .start(syncDefendantIdInDefendantOffenceStep())
+    .build()
+
+  @Bean
+  @StepScope
+  fun syncDefendantIdInDefendantOffenceReader(
+    @Value("#{jobParameters['minId']}") minId: Long?,
+    @Value("#{jobParameters['maxId']}") maxId: Long?,
+  ): JdbcCursorItemReader<Defendant> = JdbcCursorItemReaderBuilder<Defendant>()
+    .name("syncDefendantIdInDefendantOffenceReader")
+    .dataSource(targetDataSource)
+    .fetchSize(3000)
+    .sql("${SYNC_DEFENDANT_ID_QUERY} WHERE d.legacy_id BETWEEN $minId AND $maxId ORDER BY d.id ASC")
+    .rowMapper { rs, _ ->
+      Defendant(
+        id = rs.getObject("id", UUID::class.java),
+        defendantID = rs.getObject("defendant_id", UUID::class.java),
+        legacyID = rs.getLong("legacy_id"),
+        isManualUpdate = null,
+        crn = null,
+        croNumber = null,
+        tsvName = null,
+        pncId = null,
+        cprUUID = null,
+        isOffenderConfirmed = null,
+        person = null,
+        offenderID = null,
+        legacyOffenderID = null,
+        createdAt = null,
+        createdBy = null,
+        updatedAt = null,
+        updatedBy = null,
+        isDeleted = null,
+        version = null,
+      )
+    }
+    .build()
+
+  @Bean
+  fun syncDefendantIdInDefendantOffenceProcessor(): ItemProcessor<Defendant, DefendantOffence> = CompositeItemProcessorBuilder<Defendant, DefendantOffence>()
+    .delegates(listOf(SyncDefendantIdInDefendantOffenceProcessor()))
+    .build()
+
+  @Bean
+  fun syncDefendantIdInDefendantOffenceWriter(): JdbcBatchItemWriter<DefendantOffence> = JdbcBatchItemWriterBuilder<DefendantOffence>()
+    .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
+    .sql(
+      """UPDATE hmpps_court_case_service.defendant_offence SET defendant_id = :defendantID WHERE legacy_defendant_id = :legacyDefendantID""",
+    )
+    .dataSource(targetDataSource)
+    .assertUpdates(false)
+    .build()
+
+  @Bean
+  fun syncDefendantIdInDefendantOffenceStep(): Step = StepBuilder("syncDefendantIdInDefendantOffenceStep", jobRepository)
+    .chunk<Defendant, DefendantOffence>(batchProperties.chunkSize, transactionManager)
+    .reader(syncDefendantIdInDefendantOffenceReader(null, null))
+    .processor(syncDefendantIdInDefendantOffenceProcessor())
+    .writer(syncDefendantIdInDefendantOffenceWriter())
+    .faultTolerant()
+    .retry(Throwable::class.java)
+    .retryLimit(3)
+    .build()
+
+  /**
+   *
+   *
+   * Update OffenceID FK job below.
+   *
+   *
+   *
+   */
+
+  @Bean
+  fun syncOffenceIdInDefendantOffenceRowCountListener(): RowCountListener = RowCountListener(
+    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+    targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    sourceRowCountQuery = SYNC_OFFENCE_ID_SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = SYNC_OFFENCE_ID_TARGET_ROW_COUNT_QUERY,
+  )
+
+  @Bean(name = ["syncOffenceIdInDefendantOffenceJobService"])
+  fun syncOffenceIdInDefendantOffenceJobService(@Qualifier("syncOffenceIdInDefendantOffenceJob") syncOffenceIdInDefendantOffenceJob: Job): JobService = JobService(
+    jobLauncher = jobLauncher,
+    job = syncOffenceIdInDefendantOffenceJob,
+    jdbcTemplate = JdbcTemplate(targetDataSource),
+    batchSize = 15,
+    minQuery = SYNC_OFFENCE_ID_MIN_QUERY,
+    maxQuery = SYNC_OFFENCE_ID_MAX_QUERY,
+    jobName = "syncOffenceIdInDefendantOffence",
+  )
+
+  @Bean
+  fun syncOffenceIdInDefendantOffenceJob(timerJobListener: TimerJobListener): Job = JobBuilder("syncOffenceIdInDefendantOffenceJob", jobRepository)
+    .incrementer(RunIdIncrementer())
+    .listener(timerJobListener)
+    .listener(syncOffenceIdInDefendantOffenceRowCountListener())
+    .start(syncOffenceIdInDefendantOffenceStep())
+    .build()
+
+  @Bean
+  @StepScope
+  fun syncOffenceIdInDefendantOffenceReader(
+    @Value("#{jobParameters['minId']}") minId: Long?,
+    @Value("#{jobParameters['maxId']}") maxId: Long?,
+  ): JdbcCursorItemReader<Offence> = JdbcCursorItemReaderBuilder<Offence>()
+    .name("syncOffenceIdInDefendantOffenceReader")
+    .dataSource(targetDataSource)
+    .fetchSize(3000)
+    .sql("${SYNC_OFFENCE_ID_QUERY} WHERE o.legacy_id BETWEEN $minId AND $maxId ORDER BY o.id ASC")
+    .rowMapper { rs, _ ->
+      Offence(
+        id = rs.getObject("id", UUID::class.java),
+        legacyID = rs.getLong("legacy_id"),
+        createdAt = null,
+        createdBy = null,
+        updatedAt = null,
+        updatedBy = null,
+        isDeleted = null,
+        version = null,
+        code = null,
+        title = null,
+        legislation = null,
+        listingNumber = null,
+        sequence = null,
+        shortTermCustodyPredictorScore = null,
+        wording = null,
+        judicialResults = null,
+        plea = null,
+        verdict = null,
+      )
+    }
+    .build()
+
+  @Bean
+  fun syncOffenceIdInDefendantOffenceProcessor(): ItemProcessor<Offence, DefendantOffence> = CompositeItemProcessorBuilder<Offence, DefendantOffence>()
+    .delegates(listOf(SyncOffenceIdInDefendantOffenceProcessor()))
+    .build()
+
+  @Bean
+  fun syncOffenceIdInDefendantOffenceWriter(): JdbcBatchItemWriter<DefendantOffence> = JdbcBatchItemWriterBuilder<DefendantOffence>()
+    .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
+    .sql(
+      """UPDATE hmpps_court_case_service.defendant_offence SET offence_id = :offenceID WHERE legacy_offence_id = :legacyOffenceID""",
+    )
+    .dataSource(targetDataSource)
+    .assertUpdates(false)
+    .build()
+
+  @Bean
+  fun syncOffenceIdInDefendantOffenceStep(): Step = StepBuilder("syncOffenceIdInDefendantOffenceStep", jobRepository)
+    .chunk<Offence, DefendantOffence>(batchProperties.chunkSize, transactionManager)
+    .reader(syncOffenceIdInDefendantOffenceReader(null, null))
+    .processor(syncOffenceIdInDefendantOffenceProcessor())
+    .writer(syncOffenceIdInDefendantOffenceWriter())
+    .faultTolerant()
+    .retry(Throwable::class.java)
+    .retryLimit(3)
+    .build()
 }

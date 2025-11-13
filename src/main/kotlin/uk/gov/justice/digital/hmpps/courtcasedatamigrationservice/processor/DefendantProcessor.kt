@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.f4b6a3.uuid.UuidCreator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.batch.item.ItemProcessor
@@ -29,7 +30,9 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
   }
 
   override fun process(defendantQueryResult: DefendantQueryResult): Defendant = Defendant(
-    id = defendantQueryResult.id,
+    id = UuidCreator.getTimeOrderedEpochPlus1(),
+    defendantID = defendantQueryResult.defendantID,
+    legacyID = defendantQueryResult.id.toLong(),
     isManualUpdate = defendantQueryResult.isManualUpdate,
     crn = defendantQueryResult.crn,
     croNumber = defendantQueryResult.cro,
@@ -38,7 +41,8 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
     cprUUID = defendantQueryResult.cprUUID,
     isOffenderConfirmed = defendantQueryResult.offenderConfirmed,
     person = buildPersonJSONBString(defendantQueryResult),
-    offenderId = defendantQueryResult.fkOffenderId,
+    legacyOffenderID = defendantQueryResult.fkOffenderID,
+    offenderID = null,
     createdAt = defendantQueryResult.created,
     createdBy = defendantQueryResult.createdBy,
     updatedAt = defendantQueryResult.lastUpdated,

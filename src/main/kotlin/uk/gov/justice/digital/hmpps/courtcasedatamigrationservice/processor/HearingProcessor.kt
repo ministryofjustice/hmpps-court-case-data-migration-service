@@ -3,8 +3,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import com.github.f4b6a3.uuid.UuidCreator
 import org.springframework.batch.item.ItemProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.HearingNote
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.HearingOutcome
@@ -16,19 +15,14 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 
 class HearingProcessor : ItemProcessor<HearingQueryResult, Hearing> {
 
-  private companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
-  }
-
   private val objectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
   }
 
   override fun process(hearingQueryResult: HearingQueryResult): Hearing {
-//    log.info("Processing hearing: {}", hearingQueryResult.id)
-
     val hearing = Hearing(
-      id = hearingQueryResult.id,
+      id = UuidCreator.getTimeOrderedEpochPlus1(),
+      legacyID = hearingQueryResult.id.toLong(),
       type = hearingQueryResult.hearingType,
       eventType = hearingQueryResult.hearingEventType,
       listNumber = hearingQueryResult.listNo,
@@ -52,7 +46,7 @@ class HearingProcessor : ItemProcessor<HearingQueryResult, Hearing> {
       results.map { result ->
         TargetHearingOutcome(
           id = result.id,
-          defendantId = result.defendantId,
+          defendantID = result.defendantId,
           type = result.outcomeType,
           outcomeDate = result.outcomeDate,
           state = result.state,
@@ -78,7 +72,7 @@ class HearingProcessor : ItemProcessor<HearingQueryResult, Hearing> {
       results.map { result ->
         HearingCaseNote(
           id = result.id,
-          defendantId = result.defendantId,
+          defendantID = result.defendantId,
           note = result.note,
           author = result.author,
           isDraft = result.draft,

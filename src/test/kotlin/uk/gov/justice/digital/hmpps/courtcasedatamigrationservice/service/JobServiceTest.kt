@@ -38,7 +38,7 @@ class JobServiceTest {
     jobService = JobService(
       jobLauncher = jobLauncher,
       job = job,
-      sourceJdbcTemplate = jdbcTemplate,
+      jdbcTemplate = jdbcTemplate,
       batchSize = batchSize,
       minQuery = minQuery,
       maxQuery = maxQuery,

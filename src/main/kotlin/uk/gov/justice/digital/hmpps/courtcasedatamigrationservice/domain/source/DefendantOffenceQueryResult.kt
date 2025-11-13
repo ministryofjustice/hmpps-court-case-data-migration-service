@@ -4,8 +4,8 @@ import java.sql.Timestamp
 
 data class DefendantOffenceQueryResult(
   val id: Int,
-  val offenceId: Int?,
-  val defendantId: Int?,
+  val legacyOffenceId: Int?,
+  val legacyDefendantId: Int?,
   val created: Timestamp?,
   val createdBy: String?,
   val lastUpdated: Timestamp?,

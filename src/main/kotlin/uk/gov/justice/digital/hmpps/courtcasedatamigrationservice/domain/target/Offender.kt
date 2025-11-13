@@ -2,9 +2,11 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
 import java.sql.Date
 import java.sql.Timestamp
+import java.util.UUID
 
 data class Offender(
-  val id: Int,
+  val id: UUID,
+  val legacyID: Long?,
   val suspendedSentenceOrder: Boolean?,
   val breach: Boolean?,
   val awaitingPSR: Boolean?,

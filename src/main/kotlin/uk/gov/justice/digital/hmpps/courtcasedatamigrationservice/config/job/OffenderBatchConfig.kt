@@ -102,8 +102,8 @@ class OffenderBatchConfig(
   fun offenderWriter(): JdbcBatchItemWriter<Offender> = JdbcBatchItemWriterBuilder<Offender>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.offender (id, suspended_sentence_order, breach, awaiting_psr, probation_status, pre_sentence_activity, previously_known_termination_date, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :suspendedSentenceOrder, :breach, :awaitingPSR, :probationStatus, :preSentenceActivity, :previouslyKnownTerminationDate, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.offender (id, legacy_id, suspended_sentence_order, breach, awaiting_psr, probation_status, pre_sentence_activity, previously_known_termination_date, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :legacyID, :suspendedSentenceOrder, :breach, :awaitingPSR, :probationStatus, :preSentenceActivity, :previouslyKnownTerminationDate, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -161,14 +161,14 @@ class OffenderBatchConfig(
     .listener(timerJobListener)
     .listener(offenderRowCountListener())
     .start(offenderStep())
-    .next(validationStep())
+//    .next(validationStep())
     .build()
 
   @Bean(name = ["offenderJobService"])
   fun offenderJobService(@Qualifier("offenderJob") offenderJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = offenderJob,
-    sourceJdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
