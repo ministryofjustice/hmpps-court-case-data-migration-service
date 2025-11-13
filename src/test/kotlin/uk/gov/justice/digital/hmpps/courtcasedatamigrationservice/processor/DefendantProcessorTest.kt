@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Person
 import java.sql.Timestamp
 import java.time.LocalDate
+import java.util.UUID
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Address as TargetAddress
 
 class DefendantProcessorTest {
@@ -31,6 +32,7 @@ class DefendantProcessorTest {
   fun `should map defendantQueryResult to defendant`() {
     val defendantQueryResult = DefendantQueryResult(
       id = 123,
+      defendantID = UUID.fromString("fcab9830-2b95-4e4e-a18c-e6e38b5117f7"),
       name = """{"title":"Ms","forename1":"Jane","forename2":"A.","surname":"Smith"}""",
       address = """{"line1":"123 Main St","line2":"Flat 4","postcode":"AB12 3CD"}""",
       phoneNumber = """{"home":"01234567890","work":"01111222333","mobile":"07700900000"}""",
@@ -45,7 +47,7 @@ class DefendantProcessorTest {
       pnc = "PNC123456",
       cprUUID = "UUID-1234",
       offenderConfirmed = true,
-      fkOffenderId = 10,
+      fkOffenderID = 10,
       created = Timestamp.valueOf("2025-09-24 12:00:00"),
       createdBy = "system",
       lastUpdated = Timestamp.valueOf("2025-09-24 12:30:00"),
@@ -56,11 +58,12 @@ class DefendantProcessorTest {
 
     val defendant = processor.process(defendantQueryResult)
 
-    assertThat(defendant.id).isEqualTo(123)
+    assertThat(defendant.legacyID).isEqualTo(123)
+    assertThat(defendant.defendantID).isEqualTo(UUID.fromString("fcab9830-2b95-4e4e-a18c-e6e38b5117f7"))
     assertThat(defendant.crn).isEqualTo("CRN456")
     assertThat(defendant.tsvName).isEqualTo("Jane Smith")
     assertThat(defendant.pncId).isEqualTo("PNC123456")
-    assertThat(defendant.offenderId).isEqualTo(10)
+    assertThat(defendant.offenderID).isNull()
     assertThat(defendant.createdAt).isEqualTo(Timestamp.valueOf("2025-09-24 12:00:00"))
     assertThat(defendant.updatedAt).isEqualTo(Timestamp.valueOf("2025-09-24 12:30:00"))
     assertThat(defendant.isDeleted).isFalse()

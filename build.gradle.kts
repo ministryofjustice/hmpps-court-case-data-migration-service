@@ -19,6 +19,7 @@ dependencies {
   implementation("org.flywaydb:flyway-database-postgresql")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
   runtimeOnly("org.postgresql:postgresql")
+  implementation("com.github.f4b6a3:uuid-creator:6.1.1")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.5.0")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")

@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 data class HearingDay(
   val id: Int,
-  val courtCentreId: Int?,
+  val courtCentreID: Int?,
   val hearingId: Int?,
   val sittingDay: String?,
   val hearingDayTime: String?,

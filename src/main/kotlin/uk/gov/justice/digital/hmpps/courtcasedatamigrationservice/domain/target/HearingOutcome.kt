@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 data class HearingOutcome(
   val id: Int,
-  val defendantId: String?,
+  val defendantID: String?,
   val type: String?,
   val outcomeDate: Timestamp?,
   val state: String?,

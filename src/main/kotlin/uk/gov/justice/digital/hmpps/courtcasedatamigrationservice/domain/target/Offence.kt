@@ -1,10 +1,12 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
 import java.sql.Timestamp
+import java.util.UUID
 
 // TODO add wording / summary to the offence job
 data class Offence(
-  val id: Int,
+  val id: UUID,
+  val legacyID: Long?,
   val code: String?,
   val title: String?,
   val legislation: String?,

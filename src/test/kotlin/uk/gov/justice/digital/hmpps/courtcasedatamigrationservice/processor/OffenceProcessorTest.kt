@@ -122,7 +122,7 @@ class OffenceProcessorTest {
     assertThat(judicialResults[0].id).isEqualTo(59222)
     assertThat(judicialResults[0].isConvictedResult).isEqualTo(false)
     assertThat(judicialResults[0].label).isEqualTo("Sent to Crown Court for trial on unconditional bail")
-    assertThat(judicialResults[0].resultTypeId).isEqualTo("705140dc-833a-4aa0-a872-839009fc4494")
+    assertThat(judicialResults[0].resultTypeID).isEqualTo("705140dc-833a-4aa0-a872-839009fc4494")
     assertThat(judicialResults[0].resultText).isNull()
     assertThat(judicialResults[0].isJudicialResultDeleted).isNull()
     assertThat(judicialResults[0].createdBy).isEqualTo("(court-case-matcher)")

@@ -101,8 +101,8 @@ class CaseBatchConfig(
   fun caseWriter(): JdbcBatchItemWriter<ProsecutionCase> = JdbcBatchItemWriterBuilder<ProsecutionCase>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.prosecution_case (id, case_id,  case_urn, source_type, c_id, case_markers, case_documents, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :caseId, CAST(:caseURN AS jsonb), :sourceType, :cID, CAST(:caseMarkers AS jsonb), CAST(:caseDocuments AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.prosecution_case (id, legacy_id, case_id,  case_urn, source_type, c_id, case_markers, case_documents, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :legacyID, :caseID, CAST(:caseURN AS jsonb), :sourceType, :cID, CAST(:caseMarkers AS jsonb), CAST(:caseDocuments AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -160,14 +160,14 @@ class CaseBatchConfig(
     .listener(timerJobListener)
     .listener(caseRowCountListener())
     .start(caseStep())
-    .next(validationStep())
+//    .next(validationStep())
     .build()
 
   @Bean(name = ["caseJobService"])
   fun caseJobService(@Qualifier("caseJob") caseJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = caseJob,
-    sourceJdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,

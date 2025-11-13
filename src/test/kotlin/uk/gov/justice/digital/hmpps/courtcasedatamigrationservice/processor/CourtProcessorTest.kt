@@ -38,7 +38,7 @@ class CourtProcessorTest {
 
     val courtCentre = processor.process(courtQueryResult)
 
-    assertThat(courtCentre.id).isEqualTo(1)
+    assertThat(courtCentre.legacyID).isEqualTo(1)
     assertThat(courtCentre.name).isEqualTo("Solihull Magistrates Court")
     assertThat(courtCentre.code).isEqualTo("B20LW")
     assertThat(courtCentre.createdAt).isEqualTo(Timestamp.valueOf("2025-09-24 12:00:00"))

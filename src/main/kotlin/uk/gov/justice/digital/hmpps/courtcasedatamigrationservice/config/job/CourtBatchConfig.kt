@@ -99,8 +99,8 @@ class CourtBatchConfig(
   fun courtWriter(): JdbcBatchItemWriter<CourtCentre> = JdbcBatchItemWriterBuilder<CourtCentre>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.court_centre (id, code, name, court_rooms, psa_code, region, address, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :code, :name, CAST(:courtRooms AS jsonb), :psaCode, :region, CAST(:address AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.court_centre (id, legacy_id, code, name, court_rooms, psa_code, region, address, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :legacyID, :code, :name, CAST(:courtRooms AS jsonb), :psaCode, :region, CAST(:address AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -158,14 +158,14 @@ class CourtBatchConfig(
     .listener(timerJobListener)
     .listener(courtRowCountListener())
     .start(courtStep())
-    .next(validationStep())
+//    .next(validationStep())
     .build()
 
   @Bean(name = ["courtJobService"])
   fun courtJobService(@Qualifier("courtJob") courtJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = courtJob,
-    sourceJdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,

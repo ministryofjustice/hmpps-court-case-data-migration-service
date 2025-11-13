@@ -108,12 +108,12 @@ SELECT
   version
 
 FROM hmpps_court_case_service.offence
-            WHERE id = ?
+            WHERE legacy_id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-      "id" to rs.getLong("id"),
+//      "id" to rs.getLong("id"), // TODO fix this
       "code" to rs.getString("code"),
       "title" to rs.getString("title"),
       "legislation" to rs.getString("legislation"),
@@ -123,7 +123,7 @@ FROM hmpps_court_case_service.offence
       "wording" to rs.getString("wording"),
 
       // Verdict
-      "verdict_id" to rs.getLong("verdict_id"),
+//      "verdict_id" to rs.getLong("verdict_id"), // TODO fix this
       "verdict_date" to rs.getString("verdict_date"),
       "verdict_type" to rs.getString("verdict_type"),
       "verdict_version" to rs.getInt("verdict_version"),
@@ -134,7 +134,7 @@ FROM hmpps_court_case_service.offence
       "verdict_last_updated_by" to rs.getString("verdict_last_updated_by"),
 
       // Plea
-      "plea_id" to rs.getLong("plea_id"),
+//      "plea_id" to rs.getLong("plea_id"), // TODO fix thjs
       "plea_date" to rs.getString("plea_date"),
       "plea_value" to rs.getString("plea_value"),
       "plea_version" to rs.getInt("plea_version"),

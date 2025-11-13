@@ -8,7 +8,9 @@ object DefendantConstants {
   const val TARGET_ROW_COUNT_QUERY = "SELECT COUNT(*) FROM hmpps_court_case_service.defendant d"
 
   const val SOURCE_QUERY = """        
-    SELECT d.id, 
+    SELECT 
+    d.id,
+    d.defendant_id, 
     d.manual_update, 
     d.crn, 
     d.cro, 
@@ -31,4 +33,16 @@ object DefendantConstants {
     d.deleted, 
     d.version
     FROM courtcaseservice.defendant d"""
+
+  const val SYNC_OFFENDER_ID_MIN_QUERY = "SELECT MIN(legacy_id) FROM hmpps_court_case_service.offender"
+  const val SYNC_OFFENDER_ID_MAX_QUERY = "SELECT MAX(legacy_id) FROM hmpps_court_case_service.offender"
+  const val SYNC_OFFENDER_ID_SOURCE_ROW_COUNT_QUERY = "select count(*) from courtcaseservice.defendant where fk_offender_id is not null"
+  const val SYNC_OFFENDER_ID_TARGET_ROW_COUNT_QUERY = "select count(*) from hmpps_court_case_service.defendant where offender_id is not null"
+
+  const val SYNC_OFFENDER_ID_QUERY = """        
+      SELECT
+      o.id,
+      o.legacy_id
+     FROM
+        hmpps_court_case_service.offender o"""
 }

@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.f4b6a3.uuid.UuidCreator
 import org.springframework.batch.item.ItemProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.CourtQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.CourtRoom
@@ -13,7 +14,8 @@ class CourtProcessor : ItemProcessor<CourtQueryResult, CourtCentre> {
   private val objectMapper = jacksonObjectMapper()
 
   override fun process(courtQueryResult: CourtQueryResult): CourtCentre = CourtCentre(
-    id = courtQueryResult.id,
+    id = UuidCreator.getTimeOrderedEpochPlus1(),
+    legacyID = courtQueryResult.id.toLong(),
     code = courtQueryResult.courtCode,
     name = courtQueryResult.name,
     createdAt = courtQueryResult.created,
@@ -35,7 +37,7 @@ class CourtProcessor : ItemProcessor<CourtQueryResult, CourtCentre> {
       results.mapIndexed { index, result ->
         TargetCourtRoom(
           id = (index + 1), // Start at 1
-          roomId = null,
+          roomID = null,
           roomName = result.courtRoom,
         )
       }

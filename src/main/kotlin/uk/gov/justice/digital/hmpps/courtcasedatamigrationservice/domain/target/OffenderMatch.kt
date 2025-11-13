@@ -1,14 +1,18 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
 import java.sql.Timestamp
+import java.util.UUID
 
 data class OffenderMatch(
-  val id: Int,
-  val offenderId: Long?,
-  val offenderMatchGroupId: Long?,
+  val id: UUID?,
+  val legacyID: Long?,
+  val offenderID: UUID?,
+  val legacyOffenderID: Long?,
+  val offenderMatchGroupID: UUID?,
+  val legacyOffenderMatchGroupID: Long?,
   val matchType: String?,
   val aliases: String?,
-  val isRejected: Boolean,
+  val isRejected: Boolean?,
   val matchProbability: Double?,
   val createdAt: Timestamp?,
   val createdBy: String?,

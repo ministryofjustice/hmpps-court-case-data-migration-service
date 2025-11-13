@@ -123,8 +123,8 @@ class OffenceBatchConfig(
   fun offenceWriter(): JdbcBatchItemWriter<Offence> = JdbcBatchItemWriterBuilder<Offence>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.offence (id, code, title, legislation, listing_number, sequence, short_term_custody_predictor_score, wording, plea, verdict, judicial_results, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :code, :title, :legislation, :listingNumber, :sequence, :shortTermCustodyPredictorScore, :wording, CAST(:plea AS jsonb), CAST(:verdict AS jsonb), CAST(:judicialResults AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.offence (id, legacy_id, code, title, legislation, listing_number, sequence, short_term_custody_predictor_score, wording, plea, verdict, judicial_results, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :legacyID, :code, :title, :legislation, :listingNumber, :sequence, :shortTermCustodyPredictorScore, :wording, CAST(:plea AS jsonb), CAST(:verdict AS jsonb), CAST(:judicialResults AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -182,14 +182,14 @@ class OffenceBatchConfig(
     .listener(timerJobListener)
     .listener(offenceRowCountListener())
     .start(offenceStep())
-    .next(validationStep())
+//    .next(validationStep())
     .build()
 
   @Bean(name = ["offenceJobService"])
   fun offenceJobService(@Qualifier("offenceJob") offenceJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = offenceJob,
-    sourceJdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,

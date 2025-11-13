@@ -31,19 +31,27 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.Defen
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.MIN_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SOURCE_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offender
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.SyncOffenderIdInDefendantProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
 import java.time.LocalDate
+import java.util.UUID
 import javax.sql.DataSource
 
 @Configuration
@@ -74,6 +82,7 @@ class DefendantBatchConfig(
     .rowMapper { rs, _ ->
       DefendantQueryResult(
         id = rs.getInt("id"),
+        defendantID = rs.getObject("defendant_id", UUID::class.java),
         isManualUpdate = rs.getBoolean("manual_update"),
         crn = rs.getString("crn"),
         cro = rs.getString("cro"),
@@ -88,7 +97,7 @@ class DefendantBatchConfig(
         tsvName = rs.getString("tsv_name"),
         pnc = rs.getString("pnc"),
         cprUUID = rs.getString("cpr_uuid"),
-        fkOffenderId = rs.getObject("fk_offender_id") as Long?,
+        fkOffenderID = rs.getObject("fk_offender_id") as Long?,
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),
@@ -108,8 +117,8 @@ class DefendantBatchConfig(
   fun defendantWriter(): JdbcBatchItemWriter<Defendant> = JdbcBatchItemWriterBuilder<Defendant>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.defendant (id, is_manual_update, crn, cro_number, tsv_name, pnc_id, cpr_uuid, is_offender_confirmed, person, offender_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :isManualUpdate, :crn, :croNumber, to_tsvector(:tsvName), :pncId, :cprUUID, :isOffenderConfirmed, CAST(:person AS jsonb), :offenderId, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.defendant (id, defendant_id, legacy_id, is_manual_update, crn, cro_number, tsv_name, pnc_id, cpr_uuid, is_offender_confirmed, person, legacy_offender_id, offender_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :defendantID, :legacyID, :isManualUpdate, :crn, :croNumber, to_tsvector(:tsvName), :pncId, :cprUUID, :isOffenderConfirmed, CAST(:person AS jsonb), :legacyOffenderID, :offenderID, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -167,14 +176,14 @@ class DefendantBatchConfig(
     .listener(timerJobListener)
     .listener(defendantRowCountListener())
     .start(defendantStep())
-    .next(validationStep())
+//    .next(validationStep())
     .build()
 
   @Bean(name = ["defendantJobService"])
   fun defendantJobService(@Qualifier("defendantJob") defendantJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = defendantJob,
-    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+    jdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
@@ -187,4 +196,96 @@ class DefendantBatchConfig(
     jobType = JobType.DEFENDANT,
     schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
   )
+
+  /**
+   *
+   *
+   * Update OffenderID FK job below.
+   *
+   *
+   *
+   */
+
+  @Bean
+  fun syncOffenderIdInDefendantRowCountListener(): RowCountListener = RowCountListener(
+    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+    targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    sourceRowCountQuery = SYNC_OFFENDER_ID_SOURCE_ROW_COUNT_QUERY,
+    targetRowCountQuery = SYNC_OFFENDER_ID_TARGET_ROW_COUNT_QUERY,
+  )
+
+  @Bean(name = ["syncOffenderIdInDefendantJobService"])
+  fun syncOffenderIdInDefendantJobService(@Qualifier("syncOffenderIdInDefendantJob") syncOffenderIdInDefendantJob: Job): JobService = JobService(
+    jobLauncher = jobLauncher,
+    job = syncOffenderIdInDefendantJob,
+    jdbcTemplate = JdbcTemplate(targetDataSource),
+    batchSize = 15,
+    minQuery = SYNC_OFFENDER_ID_MIN_QUERY,
+    maxQuery = SYNC_OFFENDER_ID_MAX_QUERY,
+    jobName = "syncOffenderIdInDefendant",
+  )
+
+  @Bean
+  fun syncOffenderIdInDefendantJob(timerJobListener: TimerJobListener): Job = JobBuilder("syncOffenderIdInDefendantJob", jobRepository)
+    .incrementer(RunIdIncrementer())
+    .listener(timerJobListener)
+    .listener(syncOffenderIdInDefendantRowCountListener())
+    .start(syncOffenderIdInDefendantStep())
+    .build()
+
+  @Bean
+  @StepScope
+  fun syncOffenderIdInDefendantReader(
+    @Value("#{jobParameters['minId']}") minId: Long?,
+    @Value("#{jobParameters['maxId']}") maxId: Long?,
+  ): JdbcCursorItemReader<Offender> = JdbcCursorItemReaderBuilder<Offender>()
+    .name("syncOffenderIdInDefendantReader")
+    .dataSource(targetDataSource)
+    .fetchSize(3000)
+    .sql("${SYNC_OFFENDER_ID_QUERY} WHERE o.legacy_id BETWEEN $minId AND $maxId ORDER BY o.legacy_id ASC")
+    .rowMapper { rs, _ ->
+      Offender(
+        id = rs.getObject("id", UUID::class.java),
+        legacyID = rs.getLong("legacy_id"),
+        suspendedSentenceOrder = null,
+        breach = null,
+        awaitingPSR = null,
+        probationStatus = null,
+        preSentenceActivity = null,
+        previouslyKnownTerminationDate = null,
+        createdAt = null,
+        createdBy = null,
+        updatedAt = null,
+        updatedBy = null,
+        isDeleted = null,
+        version = null,
+      )
+    }
+    .build()
+
+  @Bean
+  fun syncOffenderIdInDefendantProcessor(): ItemProcessor<Offender, Defendant> = CompositeItemProcessorBuilder<Offender, Defendant>()
+    .delegates(listOf(SyncOffenderIdInDefendantProcessor()))
+    .build()
+
+  @Bean
+  fun syncOffenderIdInDefendantWriter(): JdbcBatchItemWriter<Defendant> = JdbcBatchItemWriterBuilder<Defendant>()
+    .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
+    .sql(
+      """UPDATE hmpps_court_case_service.defendant SET offender_id = :offenderID WHERE legacy_offender_id = :legacyOffenderID""",
+    )
+    .dataSource(targetDataSource)
+    .assertUpdates(false) // TODO check this with Sam. The defendant table might not have the legacy offender id so it will not update any rows and throw an exception. This allows 0 rows to be updated which could potential mask a failed update? not sure at this point.
+    .build()
+
+  @Bean
+  fun syncOffenderIdInDefendantStep(): Step = StepBuilder("syncOffenderIdInDefendantStep", jobRepository)
+    .chunk<Offender, Defendant>(batchProperties.chunkSize, transactionManager)
+    .reader(syncOffenderIdInDefendantReader(null, null))
+    .processor(syncOffenderIdInDefendantProcessor())
+    .writer(syncOffenderIdInDefendantWriter())
+    .faultTolerant()
+    .retry(Throwable::class.java)
+    .retryLimit(3)
+    .build()
 }

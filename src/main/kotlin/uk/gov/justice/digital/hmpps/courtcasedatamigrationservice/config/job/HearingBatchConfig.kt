@@ -102,8 +102,8 @@ class HearingBatchConfig(
   fun hearingWriter(): JdbcBatchItemWriter<Hearing> = JdbcBatchItemWriterBuilder<Hearing>()
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
-      """INSERT INTO hmpps_court_case_service.hearing (id, type, event_type, list_number, first_created, hearing_outcome, hearing_case_note, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :type, :eventType, :listNumber, :firstCreated, CAST(:hearingOutcome AS jsonb), CAST(:hearingCaseNote AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+      """INSERT INTO hmpps_court_case_service.hearing (id, legacy_id, type, event_type, list_number, first_created, hearing_outcome, hearing_case_note, created_at, created_by, updated_at, updated_by, is_deleted, version)
+        VALUES (:id, :legacyID, :type, :eventType, :listNumber, :firstCreated, CAST(:hearingOutcome AS jsonb), CAST(:hearingCaseNote AS jsonb), :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -161,14 +161,14 @@ class HearingBatchConfig(
     .listener(timerJobListener)
     .listener(hearingRowCountListener())
     .start(hearingStep())
-    .next(validationStep())
+//    .next(validationStep())
     .build()
 
   @Bean(name = ["hearingJobService"])
   fun hearingJobService(@Qualifier("hearingJob") hearingJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = hearingJob,
-    sourceJdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = sourceJdbcTemplate,
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,

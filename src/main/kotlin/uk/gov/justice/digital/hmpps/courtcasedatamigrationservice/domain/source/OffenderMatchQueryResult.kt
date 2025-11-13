@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 data class OffenderMatchQueryResult(
   val id: Int,
-  val offenderId: Long?,
+  val fkOffenderId: Long?,
   val groupId: Long?,
   val matchType: String?,
   val aliases: String?,
