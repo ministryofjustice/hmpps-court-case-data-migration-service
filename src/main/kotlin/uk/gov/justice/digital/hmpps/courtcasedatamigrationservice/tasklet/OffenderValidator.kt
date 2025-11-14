@@ -38,7 +38,7 @@ class OffenderValidator(
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
           select 
-          id,
+          legacy_id,
           suspended_sentence_order,
           breach,
           awaiting_psr,
@@ -52,12 +52,12 @@ class OffenderValidator(
           is_deleted,
           version
           from hmpps_court_case_service.offender
-            WHERE id = ?
+            WHERE legacy_id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-      "id" to rs.getLong("id"),
+      "legacy_id" to rs.getLong("legacy_id"),
       "suspended_sentence_order" to rs.getBoolean("suspended_sentence_order"),
       "breach" to rs.getBoolean("breach"),
       "awaiting_psr" to rs.getBoolean("awaiting_psr"),
@@ -85,6 +85,7 @@ class OffenderValidator(
       }
     }
 
+    compare("id", "legacy_id", "Offender ID")
     compare("suspended_sentence_order", "suspended_sentence_order", "Suspended sentence order")
     compare("breach", "breach", "Breach")
     compare("awaiting_psr", "awaiting_psr", "Awaiting PSR")

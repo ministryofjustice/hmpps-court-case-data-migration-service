@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source
 
+import java.math.BigDecimal
 import java.sql.Timestamp
 
 data class OffenceQueryResult(
@@ -11,7 +12,7 @@ data class OffenceQueryResult(
   val sequence: Int,
   val act: String?,
   val listNo: Int?,
-  val shortTeamCustodyPredictorScore: Int?,
+  val shortTermCustodyPredictorScore: BigDecimal?,
   val created: Timestamp?,
   val createdBy: String?,
   val lastUpdated: Timestamp?,

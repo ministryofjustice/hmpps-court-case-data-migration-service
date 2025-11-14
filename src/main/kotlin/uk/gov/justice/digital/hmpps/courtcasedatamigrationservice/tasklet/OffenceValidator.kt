@@ -66,7 +66,7 @@ class OffenceValidator(
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
 SELECT
-  id, 
+  legacy_id, 
   code, 
   title, 
   legislation,
@@ -76,7 +76,7 @@ SELECT
   wording,
   
   -- Verdict
-  verdict ->> 'id' AS verdict_id,
+  verdict ->> 'legacyID' AS legacy_verdict_id,
   verdict ->> 'date' AS verdict_date,
   verdict ->> 'type' AS verdict_type,
   verdict ->> 'version' AS verdict_version,
@@ -87,7 +87,7 @@ SELECT
   verdict ->> 'lastUpdatedBy' AS verdict_last_updated_by,
 
   -- Plea
-  plea ->> 'id' AS plea_id,
+  plea ->> 'legacyID' AS legacy_plea_id,
   plea ->> 'date' AS plea_date,
   plea ->> 'value' AS plea_value,
   plea ->> 'version' AS plea_version,
@@ -113,7 +113,7 @@ FROM hmpps_court_case_service.offence
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-//      "id" to rs.getLong("id"), // TODO fix this
+      "legacy_id" to rs.getLong("legacy_id"),
       "code" to rs.getString("code"),
       "title" to rs.getString("title"),
       "legislation" to rs.getString("legislation"),
@@ -123,7 +123,7 @@ FROM hmpps_court_case_service.offence
       "wording" to rs.getString("wording"),
 
       // Verdict
-//      "verdict_id" to rs.getLong("verdict_id"), // TODO fix this
+      "legacy_verdict_id" to rs.getLong("legacy_verdict_id"),
       "verdict_date" to rs.getString("verdict_date"),
       "verdict_type" to rs.getString("verdict_type"),
       "verdict_version" to rs.getInt("verdict_version"),
@@ -134,7 +134,7 @@ FROM hmpps_court_case_service.offence
       "verdict_last_updated_by" to rs.getString("verdict_last_updated_by"),
 
       // Plea
-//      "plea_id" to rs.getLong("plea_id"), // TODO fix thjs
+      "legacy_plea_id" to rs.getLong("legacy_plea_id"),
       "plea_date" to rs.getString("plea_date"),
       "plea_value" to rs.getString("plea_value"),
       "plea_version" to rs.getInt("plea_version"),
@@ -169,6 +169,7 @@ FROM hmpps_court_case_service.offence
     }
 
     // Offence
+    compare("id", "legacy_id", "Offence ID")
     compare("offence_code", "code", "Offence code")
     compare("title", "title", "Title")
     compare("act", "legislation", "Act (or Legislation)")
@@ -178,12 +179,12 @@ FROM hmpps_court_case_service.offence
     compare("summary", "wording", "Wording")
 
     // Plea
-    compare("plea_id", "plea_id", "Plea ID")
+    compare("plea_id", "legacy_plea_id", "Plea ID")
     compare("plea_value", "plea_value", "Plea value")
     compare("plea_version", "plea_version", "Plea version")
 
     // Verdict
-    compare("verdict_id", "verdict_id", "Verdict ID")
+    compare("verdict_id", "legacy_verdict_id", "Verdict ID")
     compare("verdict_type_description", "verdict_type", "Verdict type")
     compare("verdict_version", "verdict_version", "Verdict version")
 
@@ -199,9 +200,9 @@ FROM hmpps_court_case_service.offence
 
   fun compareJudicialResults(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
-      Triple("id", "id", "ID"),
+      Triple("id", "legacyID", "ID"),
       Triple("is_convicted_result", "isConvictedResult", "Is convicted result"),
-      Triple("judicial_result_type_id", "resultTypeId", "Judicial result type ID"),
+      Triple("judicial_result_type_id", "resultTypeID", "Judicial result type ID"),
       Triple("label", "label", "Label"),
       Triple("result_text", "resultText", "Result text"),
       Triple("created", "createdAt", "Created"),

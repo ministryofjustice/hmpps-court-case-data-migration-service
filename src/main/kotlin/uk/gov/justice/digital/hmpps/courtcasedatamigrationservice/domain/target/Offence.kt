@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
+import java.math.BigDecimal
 import java.sql.Timestamp
 import java.util.UUID
 
-// TODO add wording / summary to the offence job
 data class Offence(
   val id: UUID,
   val legacyID: Long?,
@@ -12,7 +12,7 @@ data class Offence(
   val legislation: String?,
   val listingNumber: Int?,
   val sequence: Int?,
-  val shortTermCustodyPredictorScore: Int?,
+  val shortTermCustodyPredictorScore: BigDecimal?,
   val wording: String?,
   val judicialResults: String?,
   val plea: String?,

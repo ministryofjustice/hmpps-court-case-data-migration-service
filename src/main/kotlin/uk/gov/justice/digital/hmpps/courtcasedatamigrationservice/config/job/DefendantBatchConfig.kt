@@ -118,7 +118,7 @@ class DefendantBatchConfig(
     .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
     .sql(
       """INSERT INTO hmpps_court_case_service.defendant (id, defendant_id, legacy_id, is_manual_update, crn, cro_number, tsv_name, pnc_id, cpr_uuid, is_offender_confirmed, person, legacy_offender_id, offender_id, created_at, created_by, updated_at, updated_by, is_deleted, version)
-        VALUES (:id, :defendantID, :legacyID, :isManualUpdate, :crn, :croNumber, to_tsvector(:tsvName), :pncId, :cprUUID, :isOffenderConfirmed, CAST(:person AS jsonb), :legacyOffenderID, :offenderID, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
+        VALUES (:id, :defendantID, :legacyID, :isManualUpdate, :crn, :croNumber, cast(:tsvName as tsvector), :pncId, :cprUUID, :isOffenderConfirmed, CAST(:person AS jsonb), :legacyOffenderID, :offenderID, :createdAt, :createdBy, :updatedAt, :updatedBy, :isDeleted, :version)""",
     )
     .dataSource(targetDataSource)
     .build()
@@ -176,7 +176,7 @@ class DefendantBatchConfig(
     .listener(timerJobListener)
     .listener(defendantRowCountListener())
     .start(defendantStep())
-//    .next(validationStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["defendantJobService"])
@@ -275,7 +275,7 @@ class DefendantBatchConfig(
       """UPDATE hmpps_court_case_service.defendant SET offender_id = :offenderID WHERE legacy_offender_id = :legacyOffenderID""",
     )
     .dataSource(targetDataSource)
-    .assertUpdates(false) // TODO check this with Sam. The defendant table might not have the legacy offender id so it will not update any rows and throw an exception. This allows 0 rows to be updated which could potential mask a failed update? not sure at this point.
+    .assertUpdates(false)
     .build()
 
   @Bean

@@ -67,7 +67,7 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
       firstName = name?.forename1,
       middleName = name?.forename2,
       lastName = name?.surname,
-      dateOfBirth = defendantQueryResult.dateOfBirth,
+      dateOfBirth = defendantQueryResult.dateOfBirth.toString(),
       nationalId = null,
       nationalityCode = null,
       nationalityDescription = defendantQueryResult.nationality1,

@@ -77,7 +77,7 @@ class DefendantProcessorTest {
     assertThat(person.firstName).isEqualTo("Jane")
     assertThat(person.middleName).isEqualTo("A.")
     assertThat(person.lastName).isEqualTo("Smith")
-    assertThat(person.dateOfBirth).isEqualTo(LocalDate.of(1990, 1, 1))
+    assertThat(person.dateOfBirth).isEqualTo("1990-01-01")
     assertThat(person.nationalityDescription).isEqualTo("British")
     assertThat(person.additionalNationalityDescription).isEqualTo("Irish")
     assertThat(person.sex?.code).isEqualTo("F")

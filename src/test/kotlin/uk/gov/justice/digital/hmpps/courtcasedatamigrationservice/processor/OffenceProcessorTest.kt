@@ -5,12 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.TestUtils.isValueUUID
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.JudicialResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Plea
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Verdict
+import java.math.BigDecimal
 import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -28,7 +29,6 @@ class OffenceProcessorTest {
   }
 
   @Test
-  @Disabled
   fun `should map offenceQueryResult to offence`() {
     val offenceQueryResult = OffenceQueryResult(
       id = 1,
@@ -39,7 +39,7 @@ class OffenceProcessorTest {
       sequence = 1,
       act = "this is act",
       listNo = 1,
-      shortTeamCustodyPredictorScore = 1,
+      shortTermCustodyPredictorScore = BigDecimal.TWO,
       created = Timestamp.valueOf("2025-09-24 12:00:00"),
       createdBy = "system",
       lastUpdated = Timestamp.valueOf("2025-09-24 12:30:00"),
@@ -69,13 +69,17 @@ class OffenceProcessorTest {
 
     val offence = processor.process(offenceQueryResult)
 
-    assertThat(offence.id).isEqualTo(1)
+    assertThat {
+      isValueUUID(offence.id.toString())
+    }
+
     assertThat(offence.code).isEqualTo("ABC123")
     assertThat(offence.title).isEqualTo("this is title")
     assertThat(offence.sequence).isEqualTo(1)
     assertThat(offence.legislation).isEqualTo("this is act")
     assertThat(offence.listingNumber).isEqualTo(1)
-    assertThat(offence.shortTermCustodyPredictorScore).isEqualTo(1)
+    assertThat(offence.shortTermCustodyPredictorScore).isEqualTo(BigDecimal.TWO)
+    assertThat(offence.wording).isEqualTo("this is summary")
     assertThat(offence.createdAt).isEqualTo(Timestamp.valueOf("2025-09-24 12:00:00"))
     assertThat(offence.createdBy).isEqualTo("system")
     assertThat(offence.updatedAt).isEqualTo(Timestamp.valueOf("2025-09-24 12:30:00"))
@@ -85,7 +89,9 @@ class OffenceProcessorTest {
 
     val plea: Plea = objectMapper.readValue(offence.plea, Plea::class.java)
 
-    assertThat(plea.id).isEqualTo(101)
+    assertThat {
+      isValueUUID(plea.id.toString())
+    }
 
     val inputDateTime = LocalDateTime.of(2025, 9, 23, 10, 0, 0)
     val expected = inputDateTime.atZone(ZoneId.of("Europe/London"))
@@ -103,7 +109,9 @@ class OffenceProcessorTest {
 
     val verdict: Verdict = objectMapper.readValue(offence.verdict, Verdict::class.java)
 
-    assertThat(verdict.id).isEqualTo(201)
+    assertThat {
+      isValueUUID(verdict.id.toString())
+    }
     assertThat(verdict.date).isEqualTo("2025-09-24T14:00:00+01:00")
     assertThat(verdict.type).isEqualTo("Convicted")
     assertThat(verdict.createdAt).isEqualTo("2025-09-24T14:05:00+01:00")
@@ -119,14 +127,16 @@ class OffenceProcessorTest {
     )
 
     assertThat(judicialResults.size).isEqualTo(1)
-    assertThat(judicialResults[0].id).isEqualTo(59222)
+    assertThat {
+      isValueUUID(judicialResults[0].id.toString())
+    }
     assertThat(judicialResults[0].isConvictedResult).isEqualTo(false)
     assertThat(judicialResults[0].label).isEqualTo("Sent to Crown Court for trial on unconditional bail")
     assertThat(judicialResults[0].resultTypeID).isEqualTo("705140dc-833a-4aa0-a872-839009fc4494")
     assertThat(judicialResults[0].resultText).isNull()
     assertThat(judicialResults[0].isJudicialResultDeleted).isNull()
     assertThat(judicialResults[0].createdBy).isEqualTo("(court-case-matcher)")
-    assertThat(judicialResults[0].createdAt).isEqualTo("2022-10-04T12:09:46.003856")
+    assertThat(judicialResults[0].createdAt).isEqualTo("2022-10-04T12:09:46.003856+01:00")
     assertThat(judicialResults[0].updatedBy).isNull()
     assertThat(judicialResults[0].updatedAt).isNull()
     assertThat(judicialResults[0].isDeleted).isFalse()

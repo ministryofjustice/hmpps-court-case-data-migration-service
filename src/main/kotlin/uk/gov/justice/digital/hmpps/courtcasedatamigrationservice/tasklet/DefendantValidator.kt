@@ -99,7 +99,7 @@ class DefendantValidator(
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
     SELECT
-        id, 
+        legacy_id, 
         is_manual_update,
         crn,
         cro_number,
@@ -141,7 +141,7 @@ class DefendantValidator(
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-//      "id" to rs.getLong("id"), // TODO fix this
+      "legacy_id" to rs.getLong("legacy_id"),
       "is_manual_update" to rs.getBoolean("is_manual_update"),
       "crn" to rs.getString("crn"),
       "cro_number" to rs.getString("cro_number"),
@@ -185,13 +185,22 @@ class DefendantValidator(
     val id = source["id"]
 
     fun compare(fieldSource: String, fieldTarget: String, label: String = fieldSource) {
-      val sourceValue = source[fieldSource]
-      val targetValue = target[fieldTarget]
+      fun normalizeValue(value: Any?): String? = when (value) {
+        null -> null
+        is String -> if (value.equals("null", ignoreCase = true)) null else value
+        is java.sql.Date -> value.toLocalDate().toString()
+        is java.sql.Timestamp -> value.toLocalDateTime().toString()
+        else -> value.toString()
+      }
+
+      val sourceValue = normalizeValue(source[fieldSource])
+      val targetValue = normalizeValue(target[fieldTarget])
       if (sourceValue != targetValue) {
         errors.add("$label mismatch for ID $id: '$sourceValue' vs '$targetValue'")
       }
     }
 
+    compare("id", "legacy_id", "Defendant ID")
     compare("forename1", "firstName", "First name")
     compare("forename2", "middleName", "Middle name")
     compare("surname", "lastName", "Last name")
@@ -199,11 +208,11 @@ class DefendantValidator(
     compare("cro", "cro_number", "CRO")
     compare("pnc", "pnc_id", "PNC")
     compare("cpr_uuid", "cpr_uuid", "CPR UUID")
-//    compare("tsv_name", "tsv_name", "TSV name")
+    compare("tsv_name", "tsv_name", "TSV name")
     compare("manual_update", "is_manual_update", "Manual update")
     compare("offender_confirmed", "is_offender_confirmed", "Offender confirmed")
     compare("sex", "sex", "Sex")
-//    compare("date_of_birth", "dateOfBirth", "Date of birth")
+    compare("date_of_birth", "dateOfBirth", "Date of birth")
     compare("nationality_1", "nationalityDescription", "Nationality 1")
     compare("nationality_2", "additionalNationalityDescription", "Nationality 2")
     compare("line1", "address1", "Address line 1")
@@ -214,7 +223,6 @@ class DefendantValidator(
     compare("postcode", "postcode", "Postcode")
     compare("home", "homeNumber", "Home number")
     compare("mobile", "mobileNumber", "Mobile number")
-    compare("fk_offender_id", "offender_id", "Offender ID")
     compare("created", "created_at", "Created At")
     compare("created_by", "created_by", "Created By")
     compare("last_updated", "updated_at", "Updated At")

@@ -1,14 +1,12 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
-import java.time.LocalDate
-
 data class Person(
   val id: Int,
   var title: String?,
   val firstName: String?,
   val middleName: String?,
   val lastName: String?,
-  val dateOfBirth: LocalDate?,
+  val dateOfBirth: String?,
   val nationalId: Int?,
   val nationalityCode: String?,
   val nationalityDescription: String?,
