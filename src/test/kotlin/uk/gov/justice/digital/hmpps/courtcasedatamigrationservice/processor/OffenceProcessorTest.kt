@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 import java.math.BigDecimal
 import java.sql.Timestamp
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
