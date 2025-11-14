@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 import java.math.BigDecimal
 import java.sql.Timestamp
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -98,7 +99,7 @@ class OffenceProcessorTest {
       .toOffsetDateTime()
       .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
-    assertThat(plea.date).isEqualTo(expected)
+    assertThat(OffsetDateTime.parse(plea.date)).isEqualTo(expected)
     assertThat(plea.value).isEqualTo("Guilty")
     assertThat(plea.createdAt).isEqualTo("2025-07-28T09:08:46.720893+01:00")
     assertThat(plea.createdBy).isEqualTo("clerk")
