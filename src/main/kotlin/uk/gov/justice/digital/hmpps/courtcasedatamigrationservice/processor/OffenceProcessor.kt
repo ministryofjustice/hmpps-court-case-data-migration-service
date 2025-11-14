@@ -28,7 +28,7 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
       code = offenceQueryResult.offenceCode,
       listingNumber = offenceQueryResult.listNo,
       sequence = offenceQueryResult.sequence,
-      shortTermCustodyPredictorScore = offenceQueryResult.shortTeamCustodyPredictorScore, // TODO null at source is being saved as 0 in target
+      shortTermCustodyPredictorScore = offenceQueryResult.shortTermCustodyPredictorScore,
       wording = offenceQueryResult.summary,
       judicialResults = buildJudicialResultAsJSONBString(offenceQueryResult),
       plea = plea,
@@ -54,11 +54,11 @@ class OffenceProcessor : ItemProcessor<OffenceQueryResult, Offence> {
           label = result.label,
           isConvictedResult = result.isConvictedResult,
           resultTypeID = result.judicialResultTypeId,
-          isJudicialResultDeleted = null, // TODO check where this data comes from
+          isJudicialResultDeleted = null, // not at source so not included in migrated data.
           resultText = result.resultText,
-          createdAt = result.created, // TODO review the code here for timestamp
+          createdAt = normalizeIsoDateTime(result.created),
           createdBy = result.createdBy,
-          updatedAt = result.lastUpdated,
+          updatedAt = normalizeIsoDateTime(result.lastUpdated),
           updatedBy = result.lastUpdatedBy,
           isDeleted = result.deleted,
           version = result.version,

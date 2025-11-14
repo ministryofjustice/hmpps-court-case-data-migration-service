@@ -161,7 +161,7 @@ class OffenderBatchConfig(
     .listener(timerJobListener)
     .listener(offenderRowCountListener())
     .start(offenderStep())
-//    .next(validationStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["offenderJobService"])

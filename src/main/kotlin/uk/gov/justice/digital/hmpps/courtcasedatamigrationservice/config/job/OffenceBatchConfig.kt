@@ -60,10 +60,6 @@ class OffenceBatchConfig(
   @Autowired
   lateinit var jobLauncher: JobLauncher
 
-  @Autowired
-  @Qualifier("sourceJdbcTemplate")
-  lateinit var sourceJdbcTemplate: JdbcTemplate
-
   @Bean
   @StepScope
   fun offenceReader(
@@ -84,7 +80,7 @@ class OffenceBatchConfig(
         sequence = rs.getInt("sequence"),
         act = rs.getString("act"),
         listNo = rs.getInt("list_no"),
-        shortTeamCustodyPredictorScore = rs.getInt("short_term_custody_predictor_score"), // TODO review all ints as may be populating with 0
+        shortTermCustodyPredictorScore = rs.getBigDecimal("short_term_custody_predictor_score"),
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),
@@ -182,14 +178,14 @@ class OffenceBatchConfig(
     .listener(timerJobListener)
     .listener(offenceRowCountListener())
     .start(offenceStep())
-//    .next(validationStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["offenceJobService"])
   fun offenceJobService(@Qualifier("offenceJob") offenceJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = offenceJob,
-    jdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
