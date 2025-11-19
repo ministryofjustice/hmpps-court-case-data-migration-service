@@ -161,7 +161,7 @@ class HearingBatchConfig(
     .listener(timerJobListener)
     .listener(hearingRowCountListener())
     .start(hearingStep())
-//    .next(validationStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["hearingJobService"])

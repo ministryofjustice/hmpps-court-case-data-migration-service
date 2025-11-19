@@ -2,37 +2,35 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant
 
 object OffenderMatchConstants {
 
-  // TODO all of these need to be reviewed by Sam. Also they should be refactored as theres a lot of duplication.
-  const val MIN_QUERY = """SELECT MIN(om.id) from courtcaseservice.offender_match om join courtcaseservice.offender_match_group omg on (om.group_id = omg.id)
-    										join courtcaseservice.defendant d on (nullif(omg.defendant_id, 'null')::uuid = d.defendant_id)
-    										join courtcaseservice.offender o on (d.fk_offender_id = o.id)"""
-  const val MAX_QUERY = """SELECT MAX(om.id) from courtcaseservice.offender_match om join courtcaseservice.offender_match_group omg on (om.group_id = omg.id)
-    										join courtcaseservice.defendant d on (nullif(omg.defendant_id, 'null')::uuid = d.defendant_id)
-    										join courtcaseservice.offender o on (d.fk_offender_id = o.id)"""
-  const val SOURCE_ROW_COUNT_QUERY = """SELECT COUNT(*) from courtcaseservice.offender_match om join courtcaseservice.offender_match_group omg on (om.group_id = omg.id)
-    										join courtcaseservice.defendant d on (nullif(omg.defendant_id, 'null')::uuid = d.defendant_id)
-    										join courtcaseservice.offender o on (d.fk_offender_id = o.id)"""
-  const val TARGET_ROW_COUNT_QUERY = """SELECT COUNT(*) from hmpps_court_case_service.offender_match om"""
+  // TODO this should be reviewed with Samuel for correctness.
+  private const val BASE_FROM_CLAUSE = """
+        FROM courtcaseservice.offender_match om
+        JOIN courtcaseservice.offender_match_group omg ON (om.group_id = omg.id)
+        JOIN courtcaseservice.defendant d ON (nullif(omg.defendant_id, 'null')::uuid = d.defendant_id)
+        JOIN courtcaseservice.offender o ON (d.fk_offender_id = o.id)
+        """
 
-  // TODO this query needs to be reviewed by Sam
-  const val SOURCE_QUERY = """        
-    select 
-    om.id,
-    om.group_id,
-    d.fk_offender_id,
-    om.match_type,
-    om.aliases,
-    om.rejected,
-    om.match_probability,
-    om.created,
-	om.last_updated,
-	om.created_by,
-	om.last_updated_by,
-	om.deleted,
-	om.version
-    from courtcaseservice.offender_match om join courtcaseservice.offender_match_group omg on (om.group_id = omg.id)
-    										join courtcaseservice.defendant d on (nullif(omg.defendant_id, 'null')::uuid = d.defendant_id)
-    										join courtcaseservice.offender o on (d.fk_offender_id = o.id)"""
+  const val MIN_QUERY = "SELECT MIN(om.id) $BASE_FROM_CLAUSE"
+  const val MAX_QUERY = "SELECT MAX(om.id) $BASE_FROM_CLAUSE"
+  const val SOURCE_ROW_COUNT_QUERY = "SELECT COUNT(*) $BASE_FROM_CLAUSE"
+  const val TARGET_ROW_COUNT_QUERY = "SELECT COUNT(*) FROM hmpps_court_case_service.offender_match om"
+
+  const val SOURCE_QUERY = """
+          SELECT 
+              om.id,
+              om.group_id,
+              d.fk_offender_id,
+              om.match_type,
+              om.aliases,
+              om.rejected,
+              om.match_probability,
+              om.created,
+              om.last_updated,
+              om.created_by,
+              om.last_updated_by,
+              om.deleted,
+              om.version
+          $BASE_FROM_CLAUSE"""
 
   const val SYNC_OFFENDER_ID_MIN_QUERY = "SELECT MIN(legacy_id) FROM hmpps_court_case_service.offender"
   const val SYNC_OFFENDER_ID_MAX_QUERY = "SELECT MAX(legacy_id) FROM hmpps_court_case_service.offender"

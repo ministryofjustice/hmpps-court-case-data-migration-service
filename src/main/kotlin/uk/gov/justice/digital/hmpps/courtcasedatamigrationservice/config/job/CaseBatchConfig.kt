@@ -60,10 +60,6 @@ class CaseBatchConfig(
   @Autowired
   lateinit var jobLauncher: JobLauncher
 
-  @Autowired
-  @Qualifier("sourceJdbcTemplate")
-  lateinit var sourceJdbcTemplate: JdbcTemplate
-
   @Bean
   @StepScope
   fun caseReader(
@@ -160,14 +156,14 @@ class CaseBatchConfig(
     .listener(timerJobListener)
     .listener(caseRowCountListener())
     .start(caseStep())
-//    .next(validationStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["caseJobService"])
   fun caseJobService(@Qualifier("caseJob") caseJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = caseJob,
-    jdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,

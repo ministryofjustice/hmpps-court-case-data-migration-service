@@ -2,34 +2,15 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.controller
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 
 @RestController
 class JobController(
-  @Qualifier("offenceJobService")
-  private val offenceJobService: JobService,
-  @Qualifier("defendantJobService")
-  private val defendantJobService: JobService,
-  @Qualifier("hearingJobService")
-  private val hearingJobService: JobService,
-  @Qualifier("defendantOffenceJobService")
-  private val defendantOffenceJobService: JobService,
-  @Qualifier("caseJobService")
-  private val caseJobService: JobService,
-  @Qualifier("courtJobService")
-  private val courtJobService: JobService,
-  @Qualifier("offenderJobService")
-  private val offenderJobService: JobService,
-  @Qualifier("offenderMatchGroupJobService")
-  private val offenderMatchGroupJobService: JobService,
-  @Qualifier("offenderMatchJobService")
-  private val offenderMatchJobService: JobService,
+  private val jobMap: Map<JobType, () -> Unit>,
 ) {
 
   private companion object {
@@ -43,17 +24,7 @@ class JobController(
 
     log.info("Received request to start job: $type")
     return try {
-      when (type) {
-        JobType.OFFENCE -> offenceJobService.runJob()
-        JobType.DEFENDANT -> defendantJobService.runJob()
-        JobType.HEARING -> hearingJobService.runJob()
-        JobType.CASE -> caseJobService.runJob()
-        JobType.COURT -> courtJobService.runJob()
-        JobType.OFFENDER -> offenderJobService.runJob()
-        JobType.DEFENDANT_OFFENCE -> defendantOffenceJobService.runJob()
-        JobType.OFFENDER_MATCH_GROUP -> offenderMatchGroupJobService.runJob()
-        JobType.OFFENDER_MATCH -> offenderMatchJobService.runJob()
-      }
+      jobMap[type]?.invoke()
       ResponseEntity.ok("$type job started successfully")
     } catch (ex: Exception) {
       log.error("Failed to start job: $type", ex)

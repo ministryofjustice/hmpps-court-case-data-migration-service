@@ -75,10 +75,6 @@ class DefendantOffenceBatchConfig(
   @Autowired
   lateinit var jobLauncher: JobLauncher
 
-  @Autowired
-  @Qualifier("sourceJdbcTemplate")
-  lateinit var sourceJdbcTemplate: JdbcTemplate
-
   @Bean
   @StepScope
   fun defendantOffenceReader(
@@ -172,14 +168,14 @@ class DefendantOffenceBatchConfig(
     .listener(timerJobListener)
     .listener(defendantOffenceRowCountListener())
     .start(defendantOffenceStep())
-//    .next(validationStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["defendantOffenceJobService"])
   fun defendantOffenceJobService(@Qualifier("defendantOffenceJob") defendantOffenceJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = defendantOffenceJob,
-    jdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,

@@ -75,10 +75,6 @@ class OffenderMatchGroupBatchConfig(
   @Autowired
   lateinit var jobLauncher: JobLauncher
 
-  @Autowired
-  @Qualifier("sourceJdbcTemplate")
-  lateinit var sourceJdbcTemplate: JdbcTemplate
-
   @Bean
   @StepScope
   fun offenderMatchGroupReader(
@@ -175,14 +171,14 @@ class OffenderMatchGroupBatchConfig(
     .listener(timerJobListener)
     .listener(offenderMatchGroupRowCountListener())
     .start(offenderMatchGroupStep())
-//    .next(validationStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["offenderMatchGroupJobService"])
   fun offenderMatchGroupJobService(@Qualifier("offenderMatchGroupJob") offenderMatchGroupJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = offenderMatchGroupJob,
-    jdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,

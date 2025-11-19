@@ -35,7 +35,7 @@ class OffenderMatchValidator(
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
         select 
-        id,
+        legacy_id,
         created_at,
         created_by,
         updated_at,
@@ -43,12 +43,12 @@ class OffenderMatchValidator(
         is_deleted,
         version
         from hmpps_court_case_service.offender_match
-            WHERE id = ?
+            WHERE legacy_id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-      "id" to rs.getLong("id"),
+      "legacy_id" to rs.getLong("legacy_id"),
       "created_at" to rs.getTimestamp("created_at"),
       "created_by" to rs.getString("created_by"),
       "updated_at" to rs.getTimestamp("updated_at"),
@@ -70,6 +70,7 @@ class OffenderMatchValidator(
       }
     }
 
+    compare("id", "legacy_id", "Offender Match ID")
     compare("created", "created_at", "Created")
     compare("created_by", "created_by", "Created by")
     compare("last_updated", "updated_at", "Last updated")

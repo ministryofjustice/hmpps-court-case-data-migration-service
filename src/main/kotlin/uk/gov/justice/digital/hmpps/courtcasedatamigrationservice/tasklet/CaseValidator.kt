@@ -42,7 +42,7 @@ class CaseValidator(
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
         select 
-        id,
+        legacy_id,
         case_urn::text AS case_urns_raw,
         source_type,
         c_id,
@@ -55,12 +55,12 @@ class CaseValidator(
         is_deleted,
         version
         from hmpps_court_case_service.prosecution_case
-            WHERE id = ?
+            WHERE legacy_id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-      "id" to rs.getLong("id"),
+      "legacy_id" to rs.getLong("legacy_id"),
       "case_urns_raw" to rs.getString("case_urns_raw"),
       "source_type" to rs.getString("source_type"),
       "c_id" to rs.getString("c_id"),
@@ -89,6 +89,7 @@ class CaseValidator(
 
     compareCaseURNs(source, target, errors, id)
 
+    compare("id", "legacy_id", "Case ID")
     compare("source_type", "source_type", "Source Type")
 
     errors += compareCaseMarkers(
@@ -136,7 +137,7 @@ class CaseValidator(
   fun compareCaseDocuments(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
       Triple("id", "id", "ID"),
-      Triple("document_id", "documentId", "Document ID"),
+      Triple("document_id", "documentID", "Document ID"),
       Triple("document_name", "documentName", "Document Name"),
       Triple("created", "createdAt", "Created"),
       Triple("created_by", "createdBy", "Created by"),

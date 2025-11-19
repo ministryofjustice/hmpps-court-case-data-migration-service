@@ -40,7 +40,7 @@ class CourtValidator(
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
         select 
-        id,
+        legacy_id,
         code,
         name,
         court_rooms::text as court_rooms_raw,
@@ -51,12 +51,12 @@ class CourtValidator(
         is_deleted,
         version
         from hmpps_court_case_service.court_centre
-            WHERE id = ?
+            WHERE legacy_id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-      "id" to rs.getLong("id"),
+      "legacy_id" to rs.getLong("legacy_id"),
       "code" to rs.getString("code"),
       "name" to rs.getString("name"),
       "court_rooms_raw" to rs.getString("court_rooms_raw"),
@@ -81,6 +81,7 @@ class CourtValidator(
       }
     }
 
+    compare("id", "legacy_id", "Court ID")
     compare("name", "name", "Name")
     compare("court_code", "code", "Code")
 

@@ -65,7 +65,6 @@ class DefendantOffenceValidator(
       arrayOf(sourceOffenceId, sourceDefendantId),
     ) { rs, _ ->
       mapOf(
-//        "id" to rs.getLong("id"), // TODO fix this
         "offence_id" to rs.getInt("offence_id"),
         "legacy_defendant_id" to rs.getInt("legacy_defendant_id"),
         "created_at" to rs.getTimestamp("created_at"),
