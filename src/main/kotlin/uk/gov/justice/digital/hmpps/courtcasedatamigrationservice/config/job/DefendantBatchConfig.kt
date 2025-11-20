@@ -50,6 +50,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.Sche
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync.DefendantOffenderFKValidator
 import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
@@ -225,12 +226,25 @@ class DefendantBatchConfig(
     jobName = "syncOffenderIdInDefendant",
   )
 
+  fun defendantOffenderFKValidationStep(): Step = StepBuilder("defendantOffenderFKValidationStep", jobRepository)
+    .tasklet(defendantOffenderFKValidationTasklet(), transactionManager)
+    .build()
+
+  fun defendantOffenderFKValidationTasklet(): Tasklet {
+    val strategy = DefendantOffenderFKValidator(
+      sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+      targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    )
+    return PostMigrationValidator(strategy, 100, true)
+  }
+
   @Bean
   fun syncOffenderIdInDefendantJob(timerJobListener: TimerJobListener): Job = JobBuilder("syncOffenderIdInDefendantJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
     .listener(syncOffenderIdInDefendantRowCountListener())
     .start(syncOffenderIdInDefendantStep())
+    .next(defendantOffenderFKValidationStep())
     .build()
 
   @Bean
