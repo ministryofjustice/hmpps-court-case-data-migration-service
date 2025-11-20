@@ -9,6 +9,7 @@ import org.springframework.batch.repeat.RepeatStatus
 class PostMigrationValidator(
   private val validator: Validator,
   private val sampleSize: Int = 10,
+  private val isSyncJob: Boolean = false,
 ) : Tasklet {
 
   private val log = LoggerFactory.getLogger(PostMigrationValidator::class.java)
@@ -40,7 +41,9 @@ class PostMigrationValidator(
       val target = validator.fetchTargetRecord(id)
 
       if (source == null || target == null) {
-        errors.add("Missing record for ID $id")
+        if (!isSyncJob) {
+          errors.add("Missing record for ID $id")
+        }
         return@forEach
       }
 
