@@ -24,8 +24,6 @@ class OffenderMatchGroupValidator(
   ) { rs, _ ->
     mapOf(
       "id" to rs.getLong("id"),
-      "case_id" to rs.getInt("case_id"),
-      "defendant_id" to rs.getInt("defendant_id"),
       "created" to rs.getTimestamp("created"),
       "created_by" to rs.getString("created_by"),
       "last_updated" to rs.getTimestamp("last_updated"),
@@ -38,9 +36,7 @@ class OffenderMatchGroupValidator(
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
         select 
-        id,
-        prosecution_case_id,
-        defendant_id,
+        legacy_id,
         created_at,
         created_by,
         updated_at,
@@ -48,14 +44,12 @@ class OffenderMatchGroupValidator(
         is_deleted,
         version
         from hmpps_court_case_service.offender_match_group
-            WHERE id = ?
+            WHERE legacy_id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-      "id" to rs.getLong("id"),
-      "prosecution_case_id" to rs.getInt("prosecution_case_id"),
-      "defendant_id" to rs.getInt("defendant_id"),
+      "legacy_id" to rs.getLong("legacy_id"),
       "created_at" to rs.getTimestamp("created_at"),
       "created_by" to rs.getString("created_by"),
       "updated_at" to rs.getTimestamp("updated_at"),
@@ -76,8 +70,8 @@ class OffenderMatchGroupValidator(
         errors.add("$label mismatch for ID $id: '$sourceValue' vs '$targetValue'")
       }
     }
-    compare("case_id", "prosecution_case_id", "Prosecution Case ID")
-    compare("defendant_id", "defendant_id", "Defendant ID")
+
+    compare("id", "legacy_id", "Offender Match Group ID")
     compare("created", "created_at", "Created")
     compare("created_by", "created_by", "Created by")
     compare("last_updated", "updated_at", "Last updated")

@@ -1,0 +1,22 @@
+ALTER TABLE hmpps_court_case_service.defendant_offence DROP CONSTRAINT IF EXISTS fk_defendant_offence_offence;
+ALTER TABLE hmpps_court_case_service.defendant_offence DROP CONSTRAINT IF EXISTS fk_defendant_offence_defendant;
+
+ALTER TABLE hmpps_court_case_service.defendant DROP CONSTRAINT IF EXISTS fk_defendant_offender;
+
+ALTER TABLE hmpps_court_case_service.offender_match_group DROP CONSTRAINT IF EXISTS fk_offender_match_group_defendant;
+ALTER TABLE hmpps_court_case_service.offender_match_group DROP CONSTRAINT IF EXISTS fk_offender_match_group_prosecution_case;
+
+ALTER TABLE hmpps_court_case_service.offender_match DROP CONSTRAINT IF EXISTS fk_offender_match_offender;
+ALTER TABLE hmpps_court_case_service.offender_match DROP CONSTRAINT IF EXISTS fk_offender_match_group;
+
+ALTER TABLE hmpps_court_case_service.prosecution_case_hearing DROP CONSTRAINT IF EXISTS fk_prosecution_case_hearing_hearing;
+ALTER TABLE hmpps_court_case_service.prosecution_case_hearing DROP CONSTRAINT IF EXISTS fk_prosecution_case_hearing_case;
+
+ALTER TABLE hmpps_court_case_service.defendant_hearing DROP CONSTRAINT IF EXISTS fk_defendant_hearing_defendant;
+ALTER TABLE hmpps_court_case_service.defendant_hearing DROP CONSTRAINT IF EXISTS fk_defendant_hearing_hearing;
+
+ALTER TABLE hmpps_court_case_service.hearing_day DROP CONSTRAINT IF EXISTS fk_hearing_day_hearing;
+ALTER TABLE hmpps_court_case_service.hearing_day DROP CONSTRAINT IF EXISTS fk_hearing_day_court_centre;
+
+ALTER TABLE hmpps_court_case_service.defendant_prosecution_case DROP CONSTRAINT IF EXISTS fk_defendant_prosecution_case_defendant;
+ALTER TABLE hmpps_court_case_service.defendant_prosecution_case DROP CONSTRAINT IF EXISTS fk_defendant_prosecution_case_case;

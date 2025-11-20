@@ -75,14 +75,6 @@ class OffenderMatchBatchConfig(
   @Autowired
   lateinit var jobLauncher: JobLauncher
 
-  @Autowired
-  @Qualifier("sourceJdbcTemplate")
-  lateinit var sourceJdbcTemplate: JdbcTemplate
-
-  @Autowired
-  @Qualifier("targetJdbcTemplate")
-  lateinit var targetJdbcTemplate: JdbcTemplate
-
   @Bean
   @StepScope
   fun offenderMatchReader(
@@ -180,14 +172,14 @@ class OffenderMatchBatchConfig(
     .listener(timerJobListener)
     .listener(offenderMatchRowCountListener())
     .start(offenderMatchStep())
-//    .next(validationStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["offenderMatchJobService"])
   fun offenderMatchJobService(@Qualifier("offenderMatchJob") offenderMatchJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = offenderMatchJob,
-    jdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,

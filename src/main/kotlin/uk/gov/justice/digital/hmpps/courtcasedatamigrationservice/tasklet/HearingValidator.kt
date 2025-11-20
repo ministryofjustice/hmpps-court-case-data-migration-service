@@ -40,7 +40,7 @@ class HearingValidator(
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
             select 
-            id, 
+            legacy_id, 
             type, 
             event_type, 
             list_number, 
@@ -60,12 +60,12 @@ class HearingValidator(
               version
             
             from hmpps_court_case_service.hearing
-            where id = ?
+            where legacy_id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
-      "id" to rs.getLong("id"),
+      "legacy_id" to rs.getLong("legacy_id"),
       "type" to rs.getString("type"),
       "event_type" to rs.getString("event_type"),
       "list_number" to rs.getString("list_number"),
@@ -98,6 +98,7 @@ class HearingValidator(
       }
     }
 
+    compare("id", "legacy_id", "Hearing ID")
     compare("hearing_type", "type", "Hearing type")
     compare("hearing_event_type", "event_type", "Hearing event type")
     compare("list_no", "list_number", "List number")
@@ -129,7 +130,7 @@ class HearingValidator(
   fun compareHearingOutcomes(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
       Triple("id", "id", "ID"),
-      Triple("defendant_id", "defendantId", "Defendant ID"),
+      Triple("defendant_id", "defendantID", "Defendant ID"),
       Triple("outcome_type", "type", "Type"),
       Triple("state", "state", "State"),
       Triple("legacy", "isLegacy", "Is legacy"),
@@ -148,7 +149,7 @@ class HearingValidator(
   fun compareHearingCaseNotes(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
       Triple("id", "id", "ID"),
-      Triple("defendant_id", "defendantId", "Defendant ID"),
+      Triple("defendant_id", "defendantID", "Defendant ID"),
       Triple("note", "note", "Note"),
       Triple("author", "author", "Author"),
       Triple("legacy", "isLegacy", "Is legacy"),

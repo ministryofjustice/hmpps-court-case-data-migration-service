@@ -60,10 +60,6 @@ class CourtBatchConfig(
   @Autowired
   lateinit var jobLauncher: JobLauncher
 
-  @Autowired
-  @Qualifier("sourceJdbcTemplate")
-  lateinit var sourceJdbcTemplate: JdbcTemplate
-
   @Bean
   @StepScope
   fun courtReader(
@@ -158,14 +154,14 @@ class CourtBatchConfig(
     .listener(timerJobListener)
     .listener(courtRowCountListener())
     .start(courtStep())
-//    .next(validationStep())
+    .next(validationStep())
     .build()
 
   @Bean(name = ["courtJobService"])
   fun courtJobService(@Qualifier("courtJob") courtJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = courtJob,
-    jdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,

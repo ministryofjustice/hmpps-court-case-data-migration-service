@@ -60,10 +60,6 @@ class OffenderBatchConfig(
   @Autowired
   lateinit var jobLauncher: JobLauncher
 
-  @Autowired
-  @Qualifier("sourceJdbcTemplate")
-  lateinit var sourceJdbcTemplate: JdbcTemplate
-
   @Bean
   @StepScope
   fun offenderReader(
@@ -168,7 +164,7 @@ class OffenderBatchConfig(
   fun offenderJobService(@Qualifier("offenderJob") offenderJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
     job = offenderJob,
-    jdbcTemplate = sourceJdbcTemplate,
+    jdbcTemplate = JdbcTemplate(sourceDataSource),
     batchSize = 15,
     minQuery = MIN_QUERY,
     maxQuery = MAX_QUERY,
