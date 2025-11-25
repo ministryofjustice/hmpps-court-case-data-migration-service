@@ -95,10 +95,10 @@ class OffenceProcessorTest {
       isValueUUID(plea.id.toString())
     }
 
-    val fixedInstant = Instant.parse("2025-09-23T09:00:00Z")
-    val fixedClock = Clock.fixed(fixedInstant, ZoneId.of("Europe/London"))
-    val inputDateTime = LocalDateTime.ofInstant(fixedClock.instant(), fixedClock.zone)
-    val expected = inputDateTime.atZone(fixedClock.zone).toOffsetDateTime()
+    val expected = offenceQueryResult.pleaDate!!.toInstant()
+      .atZone(ZoneId.of("Europe/London"))
+      .toOffsetDateTime()
+
     assertThat(OffsetDateTime.parse(plea.date!!)).isEqualTo(expected)
 
     assertThat(plea.value).isEqualTo("Guilty")
