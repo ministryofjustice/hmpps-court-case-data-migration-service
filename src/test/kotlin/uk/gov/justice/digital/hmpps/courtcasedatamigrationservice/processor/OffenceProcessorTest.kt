@@ -13,6 +13,8 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Verdict
 import java.math.BigDecimal
 import java.sql.Timestamp
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -94,12 +96,19 @@ class OffenceProcessorTest {
       isValueUUID(plea.id.toString())
     }
 
-    val inputDateTime = LocalDateTime.of(2025, 9, 23, 10, 0, 0)
-    val expected = inputDateTime.atZone(ZoneId.of("Europe/London"))
+    val fixedInstant = Instant.parse("2025-09-23T09:00:00Z")
+    val fixedClock = Clock.fixed(fixedInstant, ZoneId.of("Europe/London"))
+
+    val inputDateTime = LocalDateTime.ofInstant(fixedClock.instant(), fixedClock.zone)
+
+    val expected = inputDateTime
+      .atZone(fixedClock.zone)
       .toOffsetDateTime()
       .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
-    assertThat(OffsetDateTime.parse(plea.date)).isEqualTo(expected) // TODO fix this.
+    val actual = OffsetDateTime.parse(plea.date)
+    assertThat(actual.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)).isEqualTo(expected)
+
     assertThat(plea.value).isEqualTo("Guilty")
 //    assertThat(plea.createdAt).isEqualTo("2025-07-28T09:08:46.720893+01:00") // TODO fix this.
     assertThat(plea.createdBy).isEqualTo("clerk")
