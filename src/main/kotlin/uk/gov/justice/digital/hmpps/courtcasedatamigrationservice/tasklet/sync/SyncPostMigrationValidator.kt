@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet
+package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync
 
 import org.slf4j.LoggerFactory
 import org.springframework.batch.core.StepContribution
@@ -6,12 +6,12 @@ import org.springframework.batch.core.scope.context.ChunkContext
 import org.springframework.batch.core.step.tasklet.Tasklet
 import org.springframework.batch.repeat.RepeatStatus
 
-class PostMigrationValidator(
-  private val validator: Validator,
+class SyncPostMigrationValidator(
+  private val validator: SyncValidator,
   private val sampleSize: Int = 10,
 ) : Tasklet {
 
-  private val log = LoggerFactory.getLogger(PostMigrationValidator::class.java)
+  private val log = LoggerFactory.getLogger(SyncPostMigrationValidator::class.java)
 
   override fun execute(
     contribution: StepContribution,
@@ -37,14 +37,15 @@ class PostMigrationValidator(
 
     sampleSourceIDs.forEach { id ->
       val source = validator.fetchSourceRecord(id)
-      val target = validator.fetchTargetRecord(id)
 
-      if (source == null || target == null) {
-        errors.add("Missing record for ID $id")
-        return@forEach
+      if (source != null) {
+        val target = validator.fetchTargetRecord(source)
+        if (target != null && target["count"] == 1L) {
+          return@forEach
+        }
       }
 
-      errors.addAll(validator.compareRecords(source, target))
+      errors.add("$source not found in target database.")
     }
 
     if (errors.isEmpty()) {

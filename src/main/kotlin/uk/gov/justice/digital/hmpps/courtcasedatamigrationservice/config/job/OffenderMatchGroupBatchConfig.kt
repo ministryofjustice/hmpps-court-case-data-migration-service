@@ -34,13 +34,9 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.Offen
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_DEFENDANT_ID_MAX_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_DEFENDANT_ID_MIN_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_DEFENDANT_ID_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_DEFENDANT_ID_SOURCE_ROW_COUNT_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_DEFENDANT_ID_TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_PROSECUTION_CASE_ID_MAX_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_PROSECUTION_CASE_ID_MIN_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_PROSECUTION_CASE_ID_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_PROSECUTION_CASE_ID_SOURCE_ROW_COUNT_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_PROSECUTION_CASE_ID_TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenderMatchGroupQueryResult
@@ -50,13 +46,15 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.OffenderMatchGroupProcessor
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.SyncDefendantIdInOffenderMatchGroupProcessor
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.SyncProsecutionCaseIdInOffenderMatchGroupProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.sync.SyncDefendantIdInOffenderMatchGroupProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.sync.SyncProsecutionCaseIdInOffenderMatchGroupProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.OffenderMatchGroupValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync.OffenderMatchGroupFKValidator
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync.SyncPostMigrationValidator
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -201,14 +199,6 @@ class OffenderMatchGroupBatchConfig(
    *
    */
 
-  @Bean
-  fun syncDefendantIdInOffenderMatchGroupRowCountListener(): RowCountListener = RowCountListener(
-    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
-    targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = SYNC_DEFENDANT_ID_SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = SYNC_DEFENDANT_ID_TARGET_ROW_COUNT_QUERY,
-  )
-
   @Bean(name = ["syncDefendantIdInOffenderMatchGroupJobService"])
   fun syncDefendantIdInOffenderMatchGroupJobService(@Qualifier("syncDefendantIdInOffenderMatchGroupJob") syncDefendantIdInOffenderMatchGroupJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
@@ -220,14 +210,26 @@ class OffenderMatchGroupBatchConfig(
     jobName = "syncDefendantIdInOffenderMatchGroup",
   )
 
+  fun offenderMatchGroupFKValidationStep(): Step = StepBuilder("offenderMatchGroupFKValidationStep", jobRepository)
+    .tasklet(offenderMatchGroupFKValidationTasklet(), transactionManager)
+    .build()
+
+  fun offenderMatchGroupFKValidationTasklet(): Tasklet {
+    val strategy = OffenderMatchGroupFKValidator(
+      sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+      targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    )
+    return SyncPostMigrationValidator(strategy, 100)
+  }
+
   @Bean
   fun syncDefendantIdInOffenderMatchGroupJob(
     timerJobListener: TimerJobListener,
   ): Job = JobBuilder("syncDefendantIdInOffenderMatchGroupJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
-    .listener(syncDefendantIdInOffenderMatchGroupRowCountListener())
     .start(syncDefendantIdInOffenderMatchGroupStep())
+    .next(offenderMatchGroupFKValidationStep())
     .build()
 
   @Bean
@@ -300,14 +302,6 @@ class OffenderMatchGroupBatchConfig(
    *
    */
 
-  @Bean
-  fun syncProsecutionCaseIdInOffenderMatchGroupRowCountListener(): RowCountListener = RowCountListener(
-    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
-    targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = SYNC_PROSECUTION_CASE_ID_SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = SYNC_PROSECUTION_CASE_ID_TARGET_ROW_COUNT_QUERY,
-  )
-
   @Bean(name = ["syncProsecutionCaseIdInOffenderMatchGroupJobService"])
   fun syncProsecutionCaseIdInOffenderMatchGroupJobService(@Qualifier("syncProsecutionCaseIdInOffenderMatchGroupJob") syncProsecutionCaseIdInOffenderMatchGroupJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
@@ -323,7 +317,6 @@ class OffenderMatchGroupBatchConfig(
   fun syncProsecutionCaseIdInOffenderMatchGroupJob(timerJobListener: TimerJobListener): Job = JobBuilder("syncProsecutionCaseIdInOffenderMatchGroupJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
-    .listener(syncProsecutionCaseIdInOffenderMatchGroupRowCountListener())
     .start(syncProsecutionCaseIdInOffenderMatchGroupStep())
     .build()
 
