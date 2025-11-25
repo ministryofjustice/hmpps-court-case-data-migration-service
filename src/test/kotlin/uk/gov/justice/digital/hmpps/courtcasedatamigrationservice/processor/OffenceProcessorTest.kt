@@ -8,6 +8,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.TestUtils.assertDateTimeEquals
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.TestUtils.assertLocalDateTimeEquals
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.TestUtils.isValueUUID
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenceQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.JudicialResult
@@ -15,8 +17,6 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Verdict
 import java.math.BigDecimal
 import java.sql.Timestamp
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.ZoneId
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.JudicialResult as SourceJudicialResult
 
@@ -133,25 +133,5 @@ class OffenceProcessorTest {
     assertThat(judicialResults[0].updatedAt).isNull()
     assertThat(judicialResults[0].isDeleted).isFalse()
     assertThat(judicialResults[0].version).isEqualTo(0)
-  }
-
-  private fun assertDateTimeEquals(actual: String?, expectedTimestamp: Timestamp?, zone: ZoneId = ZoneId.of("Europe/London")) {
-    requireNotNull(actual) { "Actual date string cannot be null" }
-    requireNotNull(expectedTimestamp) { "Expected timestamp cannot be null" }
-
-    val actualOffset = OffsetDateTime.parse(actual)
-    val expectedOffset = expectedTimestamp.toInstant().atZone(zone).toOffsetDateTime()
-
-    assertThat(actualOffset).isEqualTo(expectedOffset)
-  }
-
-  private fun assertLocalDateTimeEquals(actual: String?, expected: String?, zone: ZoneId = ZoneId.of("Europe/London")) {
-    requireNotNull(actual) { "Actual date string cannot be null" }
-    requireNotNull(expected) { "Expected date string cannot be null" }
-
-    val actualOffset = OffsetDateTime.parse(actual)
-    val expectedOffset = LocalDateTime.parse(expected).atZone(zone).toOffsetDateTime()
-
-    assertThat(actualOffset).isEqualTo(expectedOffset)
   }
 }
