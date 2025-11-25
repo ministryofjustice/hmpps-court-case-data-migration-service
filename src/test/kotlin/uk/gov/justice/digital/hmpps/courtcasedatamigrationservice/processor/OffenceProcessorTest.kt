@@ -18,7 +18,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 class OffenceProcessorTest {
 
@@ -98,16 +97,9 @@ class OffenceProcessorTest {
 
     val fixedInstant = Instant.parse("2025-09-23T09:00:00Z")
     val fixedClock = Clock.fixed(fixedInstant, ZoneId.of("Europe/London"))
-
     val inputDateTime = LocalDateTime.ofInstant(fixedClock.instant(), fixedClock.zone)
-
-    val expected = inputDateTime
-      .atZone(fixedClock.zone)
-      .toOffsetDateTime()
-//      .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-
-    val actual = OffsetDateTime.parse(plea.date)
-    assertThat(actual).isEqualTo(expected)
+    val expected = inputDateTime.atZone(fixedClock.zone).toOffsetDateTime()
+    assertThat(OffsetDateTime.parse(plea.date!!)).isEqualTo(expected)
 
     assertThat(plea.value).isEqualTo("Guilty")
 //    assertThat(plea.createdAt).isEqualTo("2025-07-28T09:08:46.720893+01:00") // TODO fix this.
