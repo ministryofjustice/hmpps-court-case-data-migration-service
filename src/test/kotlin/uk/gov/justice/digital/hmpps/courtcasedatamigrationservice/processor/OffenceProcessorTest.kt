@@ -104,10 +104,10 @@ class OffenceProcessorTest {
     val expected = inputDateTime
       .atZone(fixedClock.zone)
       .toOffsetDateTime()
-      .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+//      .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
     val actual = OffsetDateTime.parse(plea.date)
-    assertThat(actual.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)).isEqualTo(expected)
+    assertThat(actual).isEqualTo(expected)
 
     assertThat(plea.value).isEqualTo("Guilty")
 //    assertThat(plea.createdAt).isEqualTo("2025-07-28T09:08:46.720893+01:00") // TODO fix this.
