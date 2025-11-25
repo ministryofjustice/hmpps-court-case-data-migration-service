@@ -1,3 +1,4 @@
+
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -17,13 +18,13 @@ import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.JudicialResult as SourceJudicialResult
 
 class OffenceProcessorTest {
 
   private lateinit var objectMapper: ObjectMapper
   private lateinit var processor: OffenceProcessor
+  private val zone = ZoneId.of("Europe/London")
 
   @BeforeEach
   fun setup() {
@@ -72,10 +73,7 @@ class OffenceProcessorTest {
 
     val offence = processor.process(offenceQueryResult)
 
-    assertThat {
-      isValueUUID(offence.id.toString())
-    }
-
+    assertThat { isValueUUID(offence.id.toString()) }
     assertThat(offence.code).isEqualTo("ABC123")
     assertThat(offence.title).isEqualTo("this is title")
     assertThat(offence.sequence).isEqualTo(1)
@@ -91,53 +89,23 @@ class OffenceProcessorTest {
     assertThat(offence.version).isEqualTo(1)
 
     val plea: Plea = objectMapper.readValue(offence.plea, Plea::class.java)
-
-    assertThat {
-      isValueUUID(plea.id.toString())
-    }
-    assertThat(OffsetDateTime.parse(plea.date!!)).isEqualTo(
-      offenceQueryResult.pleaDate!!.toInstant()
-        .atZone(ZoneId.of("Europe/London"))
-        .toOffsetDateTime(),
-    )
+    assertThat { isValueUUID(plea.id.toString()) }
+    assertDateTimeEquals(plea.date, offenceQueryResult.pleaDate)
     assertThat(plea.value).isEqualTo("Guilty")
-    assertThat(OffsetDateTime.parse(plea.createdAt!!)).isEqualTo(
-      offenceQueryResult.pleaCreated!!.toInstant()
-        .atZone(ZoneId.of("Europe/London"))
-        .toOffsetDateTime(),
-    )
+    assertDateTimeEquals(plea.createdAt, offenceQueryResult.pleaCreated)
     assertThat(plea.createdBy).isEqualTo("clerk")
-    assertThat(OffsetDateTime.parse(plea.updatedAt!!)).isEqualTo(
-      offenceQueryResult.pleaLastUpdated!!.toInstant()
-        .atZone(ZoneId.of("Europe/London"))
-        .toOffsetDateTime(),
-    )
+    assertDateTimeEquals(plea.updatedAt, offenceQueryResult.pleaLastUpdated)
     assertThat(plea.updatedBy).isEqualTo("clerk")
     assertThat(plea.isDeleted).isFalse()
     assertThat(plea.version).isEqualTo(1)
 
     val verdict: Verdict = objectMapper.readValue(offence.verdict, Verdict::class.java)
-
-    assertThat {
-      isValueUUID(verdict.id.toString())
-    }
-    assertThat(OffsetDateTime.parse(verdict.date!!)).isEqualTo(
-      offenceQueryResult.verdictDate!!.toInstant()
-        .atZone(ZoneId.of("Europe/London"))
-        .toOffsetDateTime(),
-    )
+    assertThat { isValueUUID(verdict.id.toString()) }
+    assertDateTimeEquals(verdict.date, offenceQueryResult.verdictDate)
     assertThat(verdict.type).isEqualTo("Convicted")
-    assertThat(OffsetDateTime.parse(verdict.createdAt!!)).isEqualTo(
-      offenceQueryResult.verdictCreated!!.toInstant()
-        .atZone(ZoneId.of("Europe/London"))
-        .toOffsetDateTime(),
-    )
+    assertDateTimeEquals(verdict.createdAt, offenceQueryResult.verdictCreated)
     assertThat(verdict.createdBy).isEqualTo("judge")
-    assertThat(OffsetDateTime.parse(verdict.updatedAt!!)).isEqualTo(
-      offenceQueryResult.verdictLastUpdated!!.toInstant()
-        .atZone(ZoneId.of("Europe/London"))
-        .toOffsetDateTime(),
-    )
+    assertDateTimeEquals(verdict.updatedAt, offenceQueryResult.verdictLastUpdated)
     assertThat(verdict.updatedBy).isEqualTo("judge")
     assertThat(verdict.isDeleted).isFalse()
     assertThat(verdict.version).isEqualTo(1)
@@ -146,30 +114,44 @@ class OffenceProcessorTest {
       offence.judicialResults,
       object : TypeReference<List<JudicialResult>>() {},
     )
-
     assertThat(judicialResults.size).isEqualTo(1)
-    assertThat {
-      isValueUUID(judicialResults[0].id.toString())
-    }
+    assertThat { isValueUUID(judicialResults[0].id.toString()) }
     assertThat(judicialResults[0].isConvictedResult).isEqualTo(false)
     assertThat(judicialResults[0].label).isEqualTo("Sent to Crown Court for trial on unconditional bail")
     assertThat(judicialResults[0].resultTypeID).isEqualTo("705140dc-833a-4aa0-a872-839009fc4494")
     assertThat(judicialResults[0].resultText).isNull()
     assertThat(judicialResults[0].isJudicialResultDeleted).isNull()
     assertThat(judicialResults[0].createdBy).isEqualTo("(court-case-matcher)")
+
     val mapper = jacksonObjectMapper()
     val results: List<SourceJudicialResult> = mapper.readValue(
       offenceQueryResult.judicialResults,
       object : TypeReference<List<SourceJudicialResult>>() {},
     )
-    val localDateTime = LocalDateTime.parse(results[0].created)
-    val createdOffsetDateTime = localDateTime
-      .atZone(ZoneId.of("Europe/London"))
-      .toOffsetDateTime()
-    assertThat(judicialResults[0].createdAt).isEqualTo(createdOffsetDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+    assertLocalDateTimeEquals(judicialResults[0].createdAt, results[0].created)
     assertThat(judicialResults[0].updatedBy).isNull()
     assertThat(judicialResults[0].updatedAt).isNull()
     assertThat(judicialResults[0].isDeleted).isFalse()
     assertThat(judicialResults[0].version).isEqualTo(0)
+  }
+
+  private fun assertDateTimeEquals(actual: String?, expectedTimestamp: Timestamp?, zone: ZoneId = ZoneId.of("Europe/London")) {
+    requireNotNull(actual) { "Actual date string cannot be null" }
+    requireNotNull(expectedTimestamp) { "Expected timestamp cannot be null" }
+
+    val actualOffset = OffsetDateTime.parse(actual)
+    val expectedOffset = expectedTimestamp.toInstant().atZone(zone).toOffsetDateTime()
+
+    assertThat(actualOffset).isEqualTo(expectedOffset)
+  }
+
+  private fun assertLocalDateTimeEquals(actual: String?, expected: String?, zone: ZoneId = ZoneId.of("Europe/London")) {
+    requireNotNull(actual) { "Actual date string cannot be null" }
+    requireNotNull(expected) { "Expected date string cannot be null" }
+
+    val actualOffset = OffsetDateTime.parse(actual)
+    val expectedOffset = LocalDateTime.parse(expected).atZone(zone).toOffsetDateTime()
+
+    assertThat(actualOffset).isEqualTo(expectedOffset)
   }
 }
