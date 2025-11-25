@@ -2,8 +2,8 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant
 
 object OffenderMatchConstants {
 
-  // TODO this should be reviewed with Samuel for correctness.
-  private const val BASE_FROM_CLAUSE = """
+  // TODO this should be reviewed with Samuel for correctness. This might be creating duplicates in our new offender_match table.
+  const val BASE_FROM_CLAUSE = """
         FROM courtcaseservice.offender_match om
         JOIN courtcaseservice.offender_match_group omg ON (om.group_id = omg.id)
         JOIN courtcaseservice.defendant d ON (nullif(omg.defendant_id, 'null')::uuid = d.defendant_id)
@@ -34,8 +34,6 @@ object OffenderMatchConstants {
 
   const val SYNC_OFFENDER_ID_MIN_QUERY = "SELECT MIN(legacy_id) FROM hmpps_court_case_service.offender"
   const val SYNC_OFFENDER_ID_MAX_QUERY = "SELECT MAX(legacy_id) FROM hmpps_court_case_service.offender"
-  const val SYNC_OFFENDER_ID_SOURCE_ROW_COUNT_QUERY = "select count(*) from courtcaseservice.defendant"
-  const val SYNC_OFFENDER_ID_TARGET_ROW_COUNT_QUERY = "select count(*) from hmpps_court_case_service.defendant_offence where defendant_id is not null" // TODO review this
 
   const val SYNC_OFFENDER_ID_QUERY = """        
       SELECT
@@ -46,8 +44,6 @@ object OffenderMatchConstants {
 
   const val SYNC_OFFENDER_MATCH_GROUP_ID_MIN_QUERY = "SELECT MIN(legacy_id) FROM hmpps_court_case_service.offender_match_group"
   const val SYNC_OFFENDER_MATCH_GROUP_ID_MAX_QUERY = "SELECT MAX(legacy_id) FROM hmpps_court_case_service.offender_match_group"
-  const val SYNC_OFFENDER_MATCH_GROUP_ID_SOURCE_ROW_COUNT_QUERY = "select count(*) from courtcaseservice.offender_match_group"
-  const val SYNC_OFFENDER_MATCH_GROUP_ID_TARGET_ROW_COUNT_QUERY = "select count(*) from hmpps_court_case_service.offender_match_group" // TODO review this
 
   const val SYNC_OFFENDER_MATCH_GROUP_ID_QUERY = """        
       SELECT

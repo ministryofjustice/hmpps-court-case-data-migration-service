@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor
+package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.sync
 
 import org.springframework.batch.item.ItemProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.OffenderMatchGroup

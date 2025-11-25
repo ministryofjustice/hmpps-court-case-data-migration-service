@@ -10,28 +10,28 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobSer
 class SyncJobConfig(
   @Qualifier("syncOffenderIdInDefendantJobService")
   private val syncOffenderIdInDefendantJobService: JobService,
-  @Qualifier("syncDefendantIdInDefendantOffenceJobService")
-  private val syncDefendantIdInDefendantOffenceJobService: JobService,
   @Qualifier("syncOffenceIdInDefendantOffenceJobService")
   private val syncOffenceIdInDefendantOffenceJobService: JobService,
-  @Qualifier("syncOffenderIdInOffenderMatchJobService")
-  private val syncOffenderIdInOffenderMatchJobService: JobService,
-  @Qualifier("syncOffenderMatchGroupIdInOffenderMatchJobService")
-  private val syncOffenderMatchGroupIdInOffenderMatchJobService: JobService,
-  @Qualifier("syncDefendantIdInOffenderMatchGroupJobService")
-  private val syncDefendantIdInOffenderMatchGroupJobService: JobService,
+  @Qualifier("syncDefendantIdInDefendantOffenceJobService")
+  private val syncDefendantIdInDefendantOffenceJobService: JobService,
   @Qualifier("syncProsecutionCaseIdInOffenderMatchGroupJobService")
   private val syncProsecutionCaseIdInOffenderMatchGroupJobService: JobService,
+  @Qualifier("syncDefendantIdInOffenderMatchGroupJobService")
+  private val syncDefendantIdInOffenderMatchGroupJobService: JobService,
+  @Qualifier("syncOffenderMatchGroupIdInOffenderMatchJobService")
+  private val syncOffenderMatchGroupIdInOffenderMatchJobService: JobService,
+  @Qualifier("syncOffenderIdInOffenderMatchJobService")
+  private val syncOffenderIdInOffenderMatchJobService: JobService,
 ) {
 
   @Bean
   fun syncJobMap(): Map<SyncJobType, () -> Unit> = linkedMapOf(
     SyncJobType.OFFENDER_ID_DEFENDANT to { syncOffenderIdInDefendantJobService.runJob() },
-    SyncJobType.DEFENDANT_ID_DEFENDANT_OFFENCE to { syncDefendantIdInDefendantOffenceJobService.runJob() },
     SyncJobType.OFFENCE_ID_DEFENDANT_OFFENCE to { syncOffenceIdInDefendantOffenceJobService.runJob() },
+    SyncJobType.DEFENDANT_ID_DEFENDANT_OFFENCE to { syncDefendantIdInDefendantOffenceJobService.runJob() },
     SyncJobType.PROSECUTION_CASE_ID_OFFENDER_MATCH_GROUP to { syncProsecutionCaseIdInOffenderMatchGroupJobService.runJob() },
     SyncJobType.DEFENDANT_ID_OFFENDER_MATCH_GROUP to { syncDefendantIdInOffenderMatchGroupJobService.runJob() },
-    SyncJobType.OFFENDER_ID_OFFENDER_MATCH to { syncOffenderIdInOffenderMatchJobService.runJob() },
     SyncJobType.OFFENDER_MATCH_GROUP_ID_OFFENDER_MATCH to { syncOffenderMatchGroupIdInOffenderMatchJobService.runJob() },
+    SyncJobType.OFFENDER_ID_OFFENDER_MATCH to { syncOffenderIdInOffenderMatchJobService.runJob() },
   )
 }

@@ -34,8 +34,6 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.Defen
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_MAX_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_MIN_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_SOURCE_ROW_COUNT_QUERY
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantQueryResult
@@ -44,13 +42,14 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.DefendantProcessor
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.SyncOffenderIdInDefendantProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.sync.SyncOffenderIdInDefendantProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync.DefendantOffenderFKValidator
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync.DefendantFKValidator
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync.SyncPostMigrationValidator
 import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
@@ -207,14 +206,6 @@ class DefendantBatchConfig(
    *
    */
 
-  @Bean
-  fun syncOffenderIdInDefendantRowCountListener(): RowCountListener = RowCountListener(
-    sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
-    targetJdbcTemplate = JdbcTemplate(targetDataSource),
-    sourceRowCountQuery = SYNC_OFFENDER_ID_SOURCE_ROW_COUNT_QUERY,
-    targetRowCountQuery = SYNC_OFFENDER_ID_TARGET_ROW_COUNT_QUERY,
-  )
-
   @Bean(name = ["syncOffenderIdInDefendantJobService"])
   fun syncOffenderIdInDefendantJobService(@Qualifier("syncOffenderIdInDefendantJob") syncOffenderIdInDefendantJob: Job): JobService = JobService(
     jobLauncher = jobLauncher,
@@ -226,25 +217,24 @@ class DefendantBatchConfig(
     jobName = "syncOffenderIdInDefendant",
   )
 
-  fun defendantOffenderFKValidationStep(): Step = StepBuilder("defendantOffenderFKValidationStep", jobRepository)
-    .tasklet(defendantOffenderFKValidationTasklet(), transactionManager)
+  fun defendantFKValidationStep(): Step = StepBuilder("defendantFKValidationStep", jobRepository)
+    .tasklet(defendantFKValidationTasklet(), transactionManager)
     .build()
 
-  fun defendantOffenderFKValidationTasklet(): Tasklet {
-    val strategy = DefendantOffenderFKValidator(
+  fun defendantFKValidationTasklet(): Tasklet {
+    val strategy = DefendantFKValidator(
       sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
       targetJdbcTemplate = JdbcTemplate(targetDataSource),
     )
-    return PostMigrationValidator(strategy, 100, true)
+    return SyncPostMigrationValidator(strategy, 100)
   }
 
   @Bean
   fun syncOffenderIdInDefendantJob(timerJobListener: TimerJobListener): Job = JobBuilder("syncOffenderIdInDefendantJob", jobRepository)
     .incrementer(RunIdIncrementer())
     .listener(timerJobListener)
-    .listener(syncOffenderIdInDefendantRowCountListener())
     .start(syncOffenderIdInDefendantStep())
-    .next(defendantOffenderFKValidationStep())
+    .next(defendantFKValidationStep())
     .build()
 
   @Bean
