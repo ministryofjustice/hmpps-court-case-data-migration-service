@@ -13,7 +13,7 @@ object TestUtils {
   fun isValueUUID(uuid: String): Boolean = try {
     UUID.fromString(uuid)
     true
-  } catch (e: IllegalArgumentException) {
+  } catch (_: IllegalArgumentException) {
     false
   }
 
