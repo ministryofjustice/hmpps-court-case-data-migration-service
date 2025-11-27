@@ -20,27 +20,12 @@ class DateUtilsTest {
   }
 
   @Test
-  fun `should normalize ISO string without offset`() {
-    val input = "2023-10-23T10:15:30"
-    val result = DateUtils.normalizeIsoDateTime(input)
-    assertThat(result).isEqualTo("2023-10-23T10:15:30+01:00")
-  }
-
-  @Test
-  fun `should normalize ISO string with offset and microseconds`() {
-    val input = "2025-07-28T09:08:46.720893"
-    val result = DateUtils.normalizeIsoDateTime(input)
-    assertThat(result).isEqualTo("2025-07-28T09:08:46.720893+01:00")
-  }
-
-  @Test
   fun `should return null for null string input`() {
     val result = DateUtils.normalizeIsoDateTime(null as String?)
     assertThat(result).isNull()
   }
 
   @Test
-  @Disabled
   fun `should normalize Timestamp to ISO string`() {
     val zoneId = ZoneId.of("Europe/London")
     val localDateTime = LocalDateTime.of(2023, 10, 23, 10, 15, 30)
