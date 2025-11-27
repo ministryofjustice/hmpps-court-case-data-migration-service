@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source
 
+import java.math.BigDecimal
 import java.sql.Timestamp
 
 data class OffenderMatchQueryResult(
@@ -9,7 +10,7 @@ data class OffenderMatchQueryResult(
   val matchType: String?,
   val aliases: String?,
   val rejected: Boolean,
-  val matchProbability: Double?,
+  val matchProbability: BigDecimal?,
   val created: Timestamp?,
   val createdBy: String?,
   val lastUpdated: Timestamp?,

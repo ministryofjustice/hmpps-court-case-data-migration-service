@@ -91,7 +91,7 @@ class OffenderMatchBatchConfig(
         matchType = rs.getString("match_type"),
         aliases = rs.getString("aliases"),
         rejected = rs.getBoolean("rejected"),
-        matchProbability = rs.getDouble("match_probability"),
+        matchProbability = rs.getBigDecimal("match_probability"),
         created = rs.getTimestamp("created"),
         createdBy = rs.getString("created_by"),
         lastUpdated = rs.getTimestamp("last_updated"),
