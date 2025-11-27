@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.util
 
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.sql.Timestamp
 import java.time.LocalDateTime

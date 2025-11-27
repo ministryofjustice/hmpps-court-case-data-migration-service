@@ -7,7 +7,6 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.time.temporal.ChronoUnit
 
 object DateUtils {
 
@@ -21,7 +20,6 @@ object DateUtils {
       offsetDateTime
         .atZoneSameInstant(targetZoneId)
         .toOffsetDateTime()
-//        .truncatedTo(ChronoUnit.SECONDS)
         .format(formatter)
     } catch (_: DateTimeParseException) {
       val localDateTime = LocalDateTime.parse(input)
@@ -29,7 +27,6 @@ object DateUtils {
         .atZone(ZoneId.of("UTC"))
         .withZoneSameInstant(targetZoneId)
         .toOffsetDateTime()
-//        .truncatedTo(ChronoUnit.SECONDS)
         .format(formatter)
     }
   }
@@ -39,7 +36,6 @@ object DateUtils {
     return timestamp.toInstant()
       .atZone(targetZoneId)
       .toOffsetDateTime()
-//      .truncatedTo(ChronoUnit.SECONDS)
       .format(formatter)
   }
 }
