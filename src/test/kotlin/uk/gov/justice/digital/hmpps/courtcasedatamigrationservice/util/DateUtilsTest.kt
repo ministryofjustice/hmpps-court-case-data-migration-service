@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.util
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.TestUtils.assertDateTimeEquals
 import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -34,6 +35,7 @@ class DateUtilsTest {
 
     val expected = localDateTime.atZone(zoneId).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
     assertThat(result).isEqualTo(expected)
+    assertDateTimeEquals(result, timestamp)
   }
 
   @Test
