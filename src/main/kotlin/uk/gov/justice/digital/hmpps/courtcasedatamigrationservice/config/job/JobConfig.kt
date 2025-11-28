@@ -18,6 +18,8 @@ class JobConfig(
   private val defendantOffenceJobService: JobService,
   @Qualifier("caseJobService")
   private val caseJobService: JobService,
+  @Qualifier("caseCommentJobService")
+  private val caseCommentJobService: JobService,
   @Qualifier("courtJobService")
   private val courtJobService: JobService,
   @Qualifier("offenderJobService")
@@ -35,6 +37,7 @@ class JobConfig(
     JobType.DEFENDANT to { defendantJobService.runJob() },
     JobType.HEARING to { hearingJobService.runJob() },
     JobType.CASE to { caseJobService.runJob() },
+    JobType.CASE_COMMENT to { caseCommentJobService.runJob() },
     JobType.COURT to { courtJobService.runJob() },
     JobType.OFFENDER_MATCH_GROUP to { offenderMatchGroupJobService.runJob() },
     JobType.OFFENDER_MATCH to { offenderMatchJobService.runJob() },
