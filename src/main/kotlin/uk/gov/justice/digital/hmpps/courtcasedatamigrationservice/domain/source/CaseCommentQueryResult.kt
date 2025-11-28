@@ -1,16 +1,16 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source
 
-import java.math.BigDecimal
 import java.sql.Timestamp
+import java.util.UUID
 
-data class OffenderMatchQueryResult(
+data class CaseCommentQueryResult(
   val id: Int,
-  val fkOffenderId: Long?,
-  val groupId: Long?,
-  val matchType: String?,
-  val aliases: String?,
-  val rejected: Boolean,
-  val matchProbability: BigDecimal?,
+  val caseID: String?,
+  val defendantID: UUID?,
+  val author: String?,
+  val comment: String?,
+  val isDraft: Boolean?,
+  val legacy: Boolean?,
   val created: Timestamp?,
   val createdBy: String?,
   val lastUpdated: Timestamp?,

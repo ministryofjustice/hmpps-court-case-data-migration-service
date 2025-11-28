@@ -7,5 +7,6 @@ SELECT
     (SELECT COUNT(*) FROM hmpps_court_case_service.court_centre) +
     (SELECT COUNT(*) FROM hmpps_court_case_service.defendant_offence) +
     (SELECT COUNT(*) FROM hmpps_court_case_service.offender_match_group) +
-    (SELECT COUNT(*) FROM hmpps_court_case_service.offender_match)
+    (SELECT COUNT(*) FROM hmpps_court_case_service.offender_match) +
+    (SELECT COUNT(*) FROM hmpps_court_case_service.case_comment)
         AS total_count;

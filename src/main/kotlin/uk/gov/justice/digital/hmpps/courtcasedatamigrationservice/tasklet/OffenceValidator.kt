@@ -212,6 +212,6 @@ FROM hmpps_court_case_service.offence
       Triple("deleted", "isDeleted", "Deleted"),
       Triple("version", "version", "Version"),
     )
-    return compareJsonLists(sourceJson, targetJson, id, "Hearing outcome", fieldMappings)
+    return compareJsonLists(sourceJson, targetJson, id, "Judicial Result", fieldMappings)
   }
 }

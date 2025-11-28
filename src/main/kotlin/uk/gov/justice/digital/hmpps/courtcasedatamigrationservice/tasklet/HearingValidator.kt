@@ -136,9 +136,9 @@ class HearingValidator(
       Triple("legacy", "isLegacy", "Is legacy"),
       Triple("assigned_to", "assignedTo", "Assigned to"),
       Triple("assigned_to_uuid", "assignedToUUID", "Assigned to UUID"),
-//      Triple("resulted_date", "resultedDate", "Resulted date"), // TODO fix this
+      Triple("resulted_date", "resultedDate", "Resulted date"),
       Triple("created_by", "createdBy", "Created by"),
-//      Triple("last_updated", "updatedAt", "Last updated"),
+      Triple("last_updated", "updatedAt", "Last updated"),
       Triple("last_updated_by", "updatedBy", "Last updated by"),
       Triple("deleted", "isDeleted", "Deleted"),
       Triple("version", "version", "Version"),

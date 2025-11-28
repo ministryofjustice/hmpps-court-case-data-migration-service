@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
+import java.math.BigDecimal
 import java.sql.Timestamp
 import java.util.UUID
 
@@ -13,7 +14,7 @@ data class OffenderMatch(
   val matchType: String?,
   val aliases: String?,
   val isRejected: Boolean?,
-  val matchProbability: Double?,
+  val matchProbability: BigDecimal?,
   val createdAt: Timestamp?,
   val createdBy: String?,
   val updatedAt: Timestamp?,

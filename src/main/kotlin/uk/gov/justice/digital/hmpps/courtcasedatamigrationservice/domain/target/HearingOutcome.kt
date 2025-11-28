@@ -1,16 +1,14 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
-import java.sql.Timestamp
-
 data class HearingOutcome(
   val id: Int,
   val defendantID: String?,
   val type: String?,
-  val outcomeDate: Timestamp?,
+  val outcomeDate: String?,
   val state: String?,
   val assignedTo: String?,
   val assignedToUUID: String?,
-  val resultedDate: Timestamp?,
+  val resultedDate: String?,
   val isLegacy: Boolean?,
   val createdAt: String?,
   val createdBy: String?,

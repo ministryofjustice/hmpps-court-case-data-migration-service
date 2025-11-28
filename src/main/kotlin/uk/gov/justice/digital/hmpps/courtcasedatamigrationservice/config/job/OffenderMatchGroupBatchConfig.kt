@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.Offen
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.SYNC_PROSECUTION_CASE_ID_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchGroupConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.SyncJobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.OffenderMatchGroupQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.OffenderMatchGroup
@@ -50,6 +51,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.sync
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.sync.SyncProsecutionCaseIdInOffenderMatchGroupProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SyncJobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.OffenderMatchGroupValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
@@ -293,6 +295,13 @@ class OffenderMatchGroupBatchConfig(
     .retryLimit(3)
     .build()
 
+  @Bean
+  fun syncDefendantIdInOffenderMatchGroupJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = SyncJobScheduler(
+    jobService = syncDefendantIdInOffenderMatchGroupJobService(syncDefendantIdInOffenderMatchGroupJob(timerJobListener)),
+    syncJobType = SyncJobType.DEFENDANT_ID_OFFENDER_MATCH_GROUP,
+    schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
+  )
+
   /**
    *
    *
@@ -375,4 +384,11 @@ class OffenderMatchGroupBatchConfig(
     .retry(Throwable::class.java)
     .retryLimit(3)
     .build()
+
+  @Bean
+  fun syncProsecutionCaseIdInOffenderMatchGroupJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = SyncJobScheduler(
+    jobService = syncProsecutionCaseIdInOffenderMatchGroupJobService(syncProsecutionCaseIdInOffenderMatchGroupJob(timerJobListener)),
+    syncJobType = SyncJobType.PROSECUTION_CASE_ID_OFFENDER_MATCH_GROUP,
+    schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
+  )
 }

@@ -1,33 +1,32 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet
 
 import org.springframework.jdbc.core.JdbcTemplate
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.OffenderMatchConstants.SOURCE_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.SOURCE_QUERY
+import java.util.UUID
 
-class OffenderMatchValidator(
+class CaseCommentValidator(
   private val sourceJdbcTemplate: JdbcTemplate,
   private val targetJdbcTemplate: JdbcTemplate,
 ) : Validator() {
 
   override fun fetchSourceIDs(minId: Long, maxId: Long, sampleSize: Int): List<Long> = sourceJdbcTemplate.queryForList(
-    """SELECT om.id from courtcaseservice.offender_match om join courtcaseservice.offender_match_group omg on (om.group_id = omg.id)
-    										join courtcaseservice.defendant d on (nullif(omg.defendant_id, 'null')::uuid = d.defendant_id)
-    										join courtcaseservice.offender o on (d.fk_offender_id = o.id) WHERE om.id BETWEEN ? AND ? ORDER BY RANDOM() LIMIT ?""",
+    "SELECT id FROM courtcaseservice.case_comments WHERE id BETWEEN ? AND ? ORDER BY RANDOM() LIMIT ?",
     arrayOf(minId, maxId, sampleSize),
     Long::class.java,
   )
 
   override fun fetchSourceRecord(id: Long): Map<String, Any>? = sourceJdbcTemplate.query(
-    "$SOURCE_QUERY WHERE om.id = ?",
+    "$SOURCE_QUERY WHERE cc.id = ?",
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
       "id" to rs.getLong("id"),
-      "group_id" to rs.getLong("group_id"),
-      "fk_offender_id" to rs.getLong("fk_offender_id"),
-      "match_type" to rs.getString("match_type"),
-      "aliases" to rs.getString("aliases"),
-      "rejected" to rs.getBoolean("rejected"),
-      "match_probability" to rs.getBigDecimal("match_probability"),
+      "case_id" to rs.getString("case_id"),
+      "defendant_id" to rs.getObject("defendant_id", UUID::class.java),
+      "author" to rs.getString("author"),
+      "comment" to rs.getString("comment"),
+      "is_draft" to rs.getBoolean("is_draft"),
+      "legacy" to rs.getBoolean("legacy"),
       "created" to rs.getTimestamp("created"),
       "created_by" to rs.getString("created_by"),
       "last_updated" to rs.getTimestamp("last_updated"),
@@ -39,33 +38,33 @@ class OffenderMatchValidator(
 
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
-        select 
-        legacy_id,
-        legacy_offender_match_group_id,
-        legacy_offender_id,
-        match_type,
-        aliases,
-        is_rejected,
-        match_probability,
-        created_at,
-        created_by,
-        updated_at,
-        updated_by,
-        is_deleted,
-        version
-        from hmpps_court_case_service.offender_match
+            select 
+            legacy_id,
+            legacy_defendant_id,
+            legacy_case_id,
+            author,
+            comment,
+            is_draft,
+            is_legacy,
+            created_at,
+            created_by,
+            updated_at ,
+            updated_by,
+            is_deleted,
+            version
+            from hmpps_court_case_service.case_comment
             WHERE legacy_id = ?
     """.trimIndent(),
     arrayOf(id),
   ) { rs, _ ->
     mapOf(
       "legacy_id" to rs.getLong("legacy_id"),
-      "legacy_offender_match_group_id" to rs.getLong("legacy_offender_match_group_id"),
-      "legacy_offender_id" to rs.getLong("legacy_offender_id"),
-      "match_type" to rs.getString("match_type"),
-      "aliases" to rs.getString("aliases"),
-      "is_rejected" to rs.getBoolean("is_rejected"),
-      "match_probability" to rs.getBigDecimal("match_probability"),
+      "legacy_defendant_id" to rs.getString("legacy_defendant_id"),
+      "legacy_case_id" to rs.getString("legacy_case_id"),
+      "author" to rs.getString("author"),
+      "comment" to rs.getString("comment"),
+      "is_draft" to rs.getBoolean("is_draft"),
+      "is_legacy" to rs.getBoolean("is_legacy"),
       "created_at" to rs.getTimestamp("created_at"),
       "created_by" to rs.getString("created_by"),
       "updated_at" to rs.getTimestamp("updated_at"),
@@ -80,20 +79,23 @@ class OffenderMatchValidator(
     val id = source["id"]
 
     fun compare(fieldSource: String, fieldTarget: String, label: String = fieldSource) {
-      val sourceValue = source[fieldSource]
+      var sourceValue = source[fieldSource]
       val targetValue = target[fieldTarget]
+      if (sourceValue != null && sourceValue is UUID) {
+        sourceValue = sourceValue.toString()
+      }
       if (sourceValue != targetValue) {
         errors.add("$label mismatch for ID $id: '$sourceValue' vs '$targetValue'")
       }
     }
 
-    compare("id", "legacy_id", "Offender Match ID")
-    compare("group_id", "legacy_offender_match_group_id", "Offender Match Group ID")
-    compare("fk_offender_id", "legacy_offender_id", "Offender ID")
-    compare("match_type", "match_type", "Offender Match Type")
-    compare("aliases", "aliases", "Offender Aliases")
-    compare("rejected", "is_rejected", "Offender Is Rejected")
-    compare("match_probability", "match_probability", "Offender Match Probability")
+    compare("id", "legacy_id", "Case Comment ID")
+    compare("defendant_id", "legacy_defendant_id", "Defendant ID")
+    compare("case_id", "legacy_case_id", "Case ID")
+    compare("author", "author", "Author")
+    compare("comment", "comment", "Comment")
+    compare("is_draft", "is_draft", "Is Draft")
+    compare("legacy", "is_legacy", "Is Legacy")
     compare("created", "created_at", "Created")
     compare("created_by", "created_by", "Created by")
     compare("last_updated", "updated_at", "Last updated")

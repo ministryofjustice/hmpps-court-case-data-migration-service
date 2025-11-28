@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.Defen
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.SYNC_OFFENDER_ID_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.DefendantConstants.TARGET_ROW_COUNT_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.JobType
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.SyncJobType
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Offender
@@ -45,6 +46,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.Defe
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.sync.SyncOffenderIdInDefendantProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SyncJobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.DefendantValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
@@ -292,4 +294,11 @@ class DefendantBatchConfig(
     .retry(Throwable::class.java)
     .retryLimit(3)
     .build()
+
+  @Bean
+  fun syncOffenderIdInDefendantJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = SyncJobScheduler(
+    jobService = syncOffenderIdInDefendantJobService(syncOffenderIdInDefendantJob(timerJobListener)),
+    syncJobType = SyncJobType.OFFENDER_ID_DEFENDANT,
+    schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
+  )
 }
