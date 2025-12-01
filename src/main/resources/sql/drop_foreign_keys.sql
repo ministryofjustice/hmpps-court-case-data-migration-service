@@ -20,3 +20,6 @@ ALTER TABLE hmpps_court_case_service.hearing_day DROP CONSTRAINT IF EXISTS fk_he
 
 ALTER TABLE hmpps_court_case_service.defendant_prosecution_case DROP CONSTRAINT IF EXISTS fk_defendant_prosecution_case_defendant;
 ALTER TABLE hmpps_court_case_service.defendant_prosecution_case DROP CONSTRAINT IF EXISTS fk_defendant_prosecution_case_case;
+
+ALTER TABLE hmpps_court_case_service.case_comment DROP CONSTRAINT IF EXISTS fk_case_comment_defendant;
+ALTER TABLE hmpps_court_case_service.case_comment DROP CONSTRAINT IF EXISTS fk_case_comment_case;
