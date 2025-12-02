@@ -46,7 +46,7 @@ abstract class Validator {
     }
 
     val sortedSource = sourceList.sortedBy { it["id"].toString() }
-    val sortedTarget = targetList.sortedBy { it["id"].toString() }
+    val sortedTarget = targetList.sortedBy { it["legacyID"].toString() }
 
     for (i in sortedSource.indices) {
       val source = sortedSource.getOrNull(i)

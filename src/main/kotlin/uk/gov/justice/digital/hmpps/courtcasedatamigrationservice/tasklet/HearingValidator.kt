@@ -128,7 +128,7 @@ class HearingValidator(
 
   fun compareHearingOutcomes(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
-      Triple("id", "id", "ID"),
+      Triple("id", "legacyID", "Hearing Outcomes ID"),
       Triple("defendant_id", "defendantID", "Defendant ID"),
       Triple("outcome_type", "type", "Type"),
       Triple("state", "state", "State"),
@@ -147,7 +147,7 @@ class HearingValidator(
 
   fun compareHearingCaseNotes(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
-      Triple("id", "id", "ID"),
+      Triple("id", "legacyID", "Hearing Case Notes ID"),
       Triple("defendant_id", "defendantID", "Defendant ID"),
       Triple("note", "note", "Note"),
       Triple("author", "author", "Author"),
