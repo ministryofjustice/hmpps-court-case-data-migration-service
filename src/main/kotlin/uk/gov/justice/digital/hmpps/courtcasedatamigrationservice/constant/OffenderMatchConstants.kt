@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant
 
 object OffenderMatchConstants {
 
-  // TODO this should be reviewed with Samuel for correctness. This might be creating duplicates in our new offender_match table.
   const val BASE_FROM_CLAUSE = """
         FROM courtcaseservice.offender_match om
         JOIN courtcaseservice.offender_match_group omg ON (om.group_id = omg.id)

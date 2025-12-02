@@ -1,19 +1,22 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
+import java.sql.Timestamp
 import java.util.UUID
 
-data class HearingCaseNote(
+data class CaseComment(
   val id: UUID,
   val legacyID: Long?,
-  val defendantID: String?,
-  val note: String?,
+  val defendantID: UUID?,
+  val legacyDefendantID: UUID?,
+  val caseID: UUID?,
+  val legacyCaseID: String?,
   val author: String?,
+  val comment: String?,
   val isDraft: Boolean?,
   val isLegacy: Boolean?,
-  val createdByUUID: String?,
-  val createdAt: String?,
+  val createdAt: Timestamp?,
   val createdBy: String?,
-  val updatedAt: String?,
+  val updatedAt: Timestamp?,
   val updatedBy: String?,
   val isDeleted: Boolean?,
   val version: Int?,

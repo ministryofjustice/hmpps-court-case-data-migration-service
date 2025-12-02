@@ -36,7 +36,6 @@ class HearingValidator(
     )
   }.firstOrNull()
 
-  // TODO should we make hearing outcomes and hearing case notes plural
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
             select 
@@ -129,16 +128,16 @@ class HearingValidator(
 
   fun compareHearingOutcomes(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
-      Triple("id", "id", "ID"),
+      Triple("id", "legacyID", "Hearing Outcomes ID"),
       Triple("defendant_id", "defendantID", "Defendant ID"),
       Triple("outcome_type", "type", "Type"),
       Triple("state", "state", "State"),
       Triple("legacy", "isLegacy", "Is legacy"),
       Triple("assigned_to", "assignedTo", "Assigned to"),
       Triple("assigned_to_uuid", "assignedToUUID", "Assigned to UUID"),
-//      Triple("resulted_date", "resultedDate", "Resulted date"), // TODO fix this
+      Triple("resulted_date", "resultedDate", "Resulted date"),
       Triple("created_by", "createdBy", "Created by"),
-//      Triple("last_updated", "updatedAt", "Last updated"),
+      Triple("last_updated", "updatedAt", "Last updated"),
       Triple("last_updated_by", "updatedBy", "Last updated by"),
       Triple("deleted", "isDeleted", "Deleted"),
       Triple("version", "version", "Version"),
@@ -148,7 +147,7 @@ class HearingValidator(
 
   fun compareHearingCaseNotes(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
-      Triple("id", "id", "ID"),
+      Triple("id", "legacyID", "Hearing Case Notes ID"),
       Triple("defendant_id", "defendantID", "Defendant ID"),
       Triple("note", "note", "Note"),
       Triple("author", "author", "Author"),

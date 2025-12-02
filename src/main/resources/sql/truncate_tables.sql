@@ -7,3 +7,4 @@ TRUNCATE TABLE hmpps_court_case_service.court_centre CASCADE;
 TRUNCATE TABLE hmpps_court_case_service.defendant_offence CASCADE;
 TRUNCATE TABLE hmpps_court_case_service.offender_match_group CASCADE;
 TRUNCATE TABLE hmpps_court_case_service.offender_match CASCADE;
+TRUNCATE TABLE hmpps_court_case_service.case_comment CASCADE;

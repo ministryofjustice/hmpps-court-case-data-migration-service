@@ -24,13 +24,12 @@ class CourtProcessor : ItemProcessor<CourtQueryResult, CourtCentre> {
     updatedBy = courtQueryResult.lastUpdatedBy,
     isDeleted = courtQueryResult.deleted,
     version = courtQueryResult.version,
-    psaCode = null, // TODO check where this comes from
-    region = null, // TODO check where this comes from
-    address = null, // TODO check where this comes from
+    psaCode = null,
+    region = null,
+    address = null,
     courtRooms = buildCourtRoomsAsJSONBString(courtQueryResult),
   )
 
-  // TODO review with Sam
   private fun buildCourtRoomsAsJSONBString(courtQueryResult: CourtQueryResult): String? {
     val courtRooms: List<TargetCourtRoom>? = courtQueryResult.courtRooms?.let { json ->
       val results: List<CourtRoom> = objectMapper.readValue(json)

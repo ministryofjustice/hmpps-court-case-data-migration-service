@@ -45,14 +45,15 @@ class HearingProcessor : ItemProcessor<HearingQueryResult, Hearing> {
       val results: List<HearingOutcome> = objectMapper.readValue(json)
       results.map { result ->
         TargetHearingOutcome(
-          id = result.id,
+          id = UuidCreator.getTimeOrderedEpochPlus1(),
+          legacyID = result.id.toLong(),
           defendantID = result.defendantId,
           type = result.outcomeType,
-          outcomeDate = result.outcomeDate,
+          outcomeDate = normalizeIsoDateTime(result.outcomeDate),
           state = result.state,
           assignedTo = result.assignedTo,
           assignedToUUID = result.assignedToUuid,
-          resultedDate = result.resultedDate,
+          resultedDate = normalizeIsoDateTime(result.resultedDate),
           isLegacy = result.legacy,
           createdAt = normalizeIsoDateTime(result.created),
           createdBy = result.createdBy,
@@ -71,7 +72,8 @@ class HearingProcessor : ItemProcessor<HearingQueryResult, Hearing> {
       val results: List<HearingNote> = objectMapper.readValue(json)
       results.map { result ->
         HearingCaseNote(
-          id = result.id,
+          id = UuidCreator.getTimeOrderedEpochPlus1(),
+          legacyID = result.id.toLong(),
           defendantID = result.defendantId,
           note = result.note,
           author = result.author,

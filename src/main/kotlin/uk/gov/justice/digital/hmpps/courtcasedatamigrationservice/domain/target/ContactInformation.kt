@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
+import java.util.UUID
+
 data class ContactInformation(
-  val id: Int,
+  val id: UUID,
   val homeNumber: String?,
   val workNumber: String?,
   val mobileNumber: String?,

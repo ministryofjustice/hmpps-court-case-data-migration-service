@@ -5,6 +5,7 @@ import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 object TestUtils {
@@ -12,7 +13,7 @@ object TestUtils {
   fun isValueUUID(uuid: String): Boolean = try {
     UUID.fromString(uuid)
     true
-  } catch (e: IllegalArgumentException) {
+  } catch (_: IllegalArgumentException) {
     false
   }
 
@@ -26,13 +27,16 @@ object TestUtils {
     assertThat(actualOffset).isEqualTo(expectedOffset)
   }
 
-  fun assertLocalDateTimeEquals(actual: String?, expected: String?, zone: ZoneId = ZoneId.of("Europe/London")) {
+  fun assertLocalDateTimeEquals(actual: String?, expected: String?) {
     requireNotNull(actual) { "Actual date string cannot be null" }
     requireNotNull(expected) { "Expected date string cannot be null" }
 
-    val actualOffset = OffsetDateTime.parse(actual)
-    val expectedOffset = LocalDateTime.parse(expected).atZone(zone).toOffsetDateTime()
+    val actualInstant = OffsetDateTime.parse(actual).toInstant().truncatedTo(ChronoUnit.MILLIS)
+    val expectedInstant = LocalDateTime.parse(expected)
+      .atZone(ZoneId.of("UTC"))
+      .toInstant()
+      .truncatedTo(ChronoUnit.MILLIS)
 
-    assertThat(actualOffset).isEqualTo(expectedOffset)
+    assertThat(actualInstant).isEqualTo(expectedInstant)
   }
 }

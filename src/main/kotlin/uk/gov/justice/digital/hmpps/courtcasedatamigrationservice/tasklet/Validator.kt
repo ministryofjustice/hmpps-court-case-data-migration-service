@@ -1,12 +1,14 @@
+
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 abstract class Validator {
   abstract fun fetchSourceIDs(minId: Long, maxId: Long, sampleSize: Int): List<Long>
@@ -44,7 +46,7 @@ abstract class Validator {
     }
 
     val sortedSource = sourceList.sortedBy { it["id"].toString() }
-    val sortedTarget = targetList.sortedBy { it["id"].toString() }
+    val sortedTarget = targetList.sortedBy { it["legacyID"].toString() }
 
     for (i in sortedSource.indices) {
       val source = sortedSource.getOrNull(i)
@@ -56,12 +58,12 @@ abstract class Validator {
         val sourceValue = source[sourceField]
         val targetValue = target[targetField]
 
-        val parsedSourceDate = parseDate(sourceValue)
-        val parsedTargetDate = parseDate(targetValue)
+        val parsedSourceDate = normalizeDate(sourceValue)
+        val parsedTargetDate = normalizeDate(targetValue)
 
         val mismatch = when {
           parsedSourceDate != null && parsedTargetDate != null ->
-            !parsedSourceDate.isEqual(parsedTargetDate)
+            parsedSourceDate != parsedTargetDate
           else -> sourceValue != targetValue
         }
 
@@ -74,22 +76,18 @@ abstract class Validator {
     return errors
   }
 
-  private fun parseDate(targetValue: Any?): ZonedDateTime? = try {
-    val zone = ZoneId.of("Europe/London")
-    val text = targetValue.toString()
-    when {
-      text.endsWith("Z") || text.contains("+") || text.matches(Regex(""".*\dT\d{2}:\d{2}:\d{2}.*-\d{2}:\d{2}""")) -> {
-        try {
-          ZonedDateTime.parse(text, DateTimeFormatter.ISO_ZONED_DATE_TIME)
-        } catch (_: Exception) {
-          OffsetDateTime.parse(text, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toZonedDateTime()
-        }
-      }
-      else -> {
-        LocalDateTime.parse(text, DateTimeFormatter.ISO_LOCAL_DATE_TIME).atZone(zone)
-      }
+  private fun normalizeDate(value: Any?): Instant? = try {
+    val text = value.toString()
+    val instant = try {
+      OffsetDateTime.parse(text, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        .toInstant()
+    } catch (_: Exception) {
+      LocalDateTime.parse(text, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        .atOffset(ZoneOffset.UTC)
+        .toInstant()
     }
-  } catch (e: Exception) {
+    instant.truncatedTo(ChronoUnit.SECONDS)
+  } catch (_: Exception) {
     null
   }
 }
