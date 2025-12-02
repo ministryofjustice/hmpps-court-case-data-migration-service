@@ -1,7 +1,10 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target
 
+import java.util.UUID
+
 data class CaseMarker(
-  val id: Int,
+  val id: UUID,
+  val legacyID: Long?,
   val typeID: String?,
   val typeCode: String?,
   val typeDescription: String?,

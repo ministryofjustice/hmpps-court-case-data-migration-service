@@ -62,7 +62,7 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
     }
 
     val person = Person(
-      id = defendantQueryResult.id,
+      id = UuidCreator.getTimeOrderedEpochPlus1(),
       title = name?.title,
       firstName = name?.forename1,
       middleName = name?.forename2,
@@ -80,7 +80,6 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
       occupationCode = null,
       contactInformation = buildContactInformationObject(defendantQueryResult),
       address = buildAddressObject(defendantQueryResult),
-      // TODO check these fields for person
       createdAt = normalizeIsoDateTime(defendantQueryResult.created),
       createdBy = defendantQueryResult.createdBy,
       updatedAt = normalizeIsoDateTime(defendantQueryResult.lastUpdated),
@@ -102,19 +101,19 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
     }
 
     return TargetAddress(
-      id = defendantQueryResult.id, // TODO what do we do about the ids here?
+      id = UuidCreator.getTimeOrderedEpochPlus1(),
       address1 = address?.line1,
       address2 = address?.line2,
       address3 = address?.line3,
       address4 = address?.line4,
       address5 = address?.line5,
       postcode = address?.postcode,
-      createdAt = null, // TODO how do we populate these fields?
-      createdBy = null,
-      updatedAt = null,
-      updatedBy = null,
-      isDeleted = null,
-      version = null,
+      createdAt = normalizeIsoDateTime(defendantQueryResult.created),
+      createdBy = defendantQueryResult.createdBy,
+      updatedAt = normalizeIsoDateTime(defendantQueryResult.lastUpdated),
+      updatedBy = defendantQueryResult.lastUpdatedBy,
+      isDeleted = defendantQueryResult.deleted,
+      version = defendantQueryResult.version,
     )
   }
 
@@ -129,19 +128,19 @@ class DefendantProcessor : ItemProcessor<DefendantQueryResult, Defendant> {
     }
 
     return ContactInformation(
-      id = defendantQueryResult.id, // TODO what do we do about the ids here?
+      id = UuidCreator.getTimeOrderedEpochPlus1(),
       homeNumber = phoneNumber?.home,
       workNumber = phoneNumber?.work,
       mobileNumber = phoneNumber?.mobile,
       primaryEmail = null,
       secondaryEmail = null,
       fax = null,
-      createdAt = null, // TODO how do we populate these fields?
-      createdBy = null,
-      updatedAt = null,
-      updatedBy = null,
-      isDeleted = null,
-      version = null,
+      createdAt = normalizeIsoDateTime(defendantQueryResult.created),
+      createdBy = defendantQueryResult.createdBy,
+      updatedAt = normalizeIsoDateTime(defendantQueryResult.lastUpdated),
+      updatedBy = defendantQueryResult.lastUpdatedBy,
+      isDeleted = defendantQueryResult.deleted,
+      version = defendantQueryResult.version,
     )
   }
 

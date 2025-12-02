@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.TestUtils.isValueUUID
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.DefendantQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.ContactInformation
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Person
@@ -72,8 +73,8 @@ class DefendantProcessorTest {
     val person: Person? = defendant.person?.let { objectMapper.readValue(it) }
 
     assertThat(person).isNotNull()
-    assertThat(person!!.id).isEqualTo(123)
-    assertThat(person.title).isEqualTo("Ms")
+    assertThat { isValueUUID(person!!.id.toString()) }
+    assertThat(person!!.title).isEqualTo("Ms")
     assertThat(person.firstName).isEqualTo("Jane")
     assertThat(person.middleName).isEqualTo("A.")
     assertThat(person.lastName).isEqualTo("Smith")

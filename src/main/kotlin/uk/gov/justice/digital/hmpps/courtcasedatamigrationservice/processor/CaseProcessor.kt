@@ -35,7 +35,6 @@ class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
     version = caseQueryResult.version,
   )
 
-  // TODO change this to a list? Check id is not required here
   private fun buildCaseURNAsJSONBString(
     caseQueryResult: CaseQueryResult,
   ): String? {
@@ -44,6 +43,7 @@ class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
       CaseURNs(
         caseURNs = listOf(
           CaseURN(
+            id = UuidCreator.getTimeOrderedEpochPlus1(),
             caseURN = caseQueryResult.urn,
             createdAt = normalizeIsoDateTime(caseQueryResult.created),
             createdBy = caseQueryResult.createdBy,
@@ -57,14 +57,13 @@ class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
     )
   }
 
-  // TODO do we want to capture createdBy etc for this as its not on the new schema but captured in existing db
-  // TODO review the data types in createdBy etc as theyre string and not timestamp
   private fun buildCaseMarkersAsJSONBString(caseQueryResult: CaseQueryResult): String? {
     val caseMarkers: List<TargetCaseMarker>? = caseQueryResult.caseMarkers?.let { json ->
       val results: List<CaseMarker> = objectMapper.readValue(json)
       results.map { result ->
         TargetCaseMarker(
-          id = result.id,
+          id = UuidCreator.getTimeOrderedEpochPlus1(),
+          legacyID = result.id.toLong(),
           typeID = null,
           typeCode = null,
           typeDescription = result.typeDescription,
@@ -85,7 +84,8 @@ class CaseProcessor : ItemProcessor<CaseQueryResult, ProsecutionCase> {
       val results: List<CaseDocument> = objectMapper.readValue(json)
       results.map { result ->
         TargetCaseDocument(
-          id = result.id,
+          id = UuidCreator.getTimeOrderedEpochPlus1(),
+          legacyID = result.id.toLong(),
           documentID = result.documentId,
           documentName = result.documentName,
           createdAt = normalizeIsoDateTime(result.created),

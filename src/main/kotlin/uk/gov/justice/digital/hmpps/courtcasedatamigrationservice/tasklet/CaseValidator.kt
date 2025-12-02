@@ -122,7 +122,7 @@ class CaseValidator(
 
   fun compareCaseMarkers(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
-      Triple("id", "id", "ID"),
+      Triple("id", "legacyID", "Case Marker ID"),
       Triple("type_description", "typeDescription", "Type Description"),
       Triple("created", "createdAt", "Created"),
       Triple("created_by", "createdBy", "Created by"),
@@ -136,7 +136,7 @@ class CaseValidator(
 
   fun compareCaseDocuments(sourceJson: String?, targetJson: String?, id: Any?): List<String> {
     val fieldMappings = listOf(
-      Triple("id", "id", "ID"),
+      Triple("id", "legacyID", "Case Document ID"),
       Triple("document_id", "documentID", "Document ID"),
       Triple("document_name", "documentName", "Document Name"),
       Triple("created", "createdAt", "Created"),

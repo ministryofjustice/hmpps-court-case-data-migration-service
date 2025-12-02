@@ -36,7 +36,6 @@ class HearingValidator(
     )
   }.firstOrNull()
 
-  // TODO should we make hearing outcomes and hearing case notes plural
   override fun fetchTargetRecord(id: Long): Map<String, Any>? = targetJdbcTemplate.query(
     """
             select 
