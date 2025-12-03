@@ -36,8 +36,6 @@ object DefendantConstants {
 
   const val SYNC_OFFENDER_ID_MIN_QUERY = "SELECT MIN(legacy_id) FROM hmpps_court_case_service.offender"
   const val SYNC_OFFENDER_ID_MAX_QUERY = "SELECT MAX(legacy_id) FROM hmpps_court_case_service.offender"
-  const val SYNC_OFFENDER_ID_SOURCE_ROW_COUNT_QUERY = "select count(*) from courtcaseservice.defendant where fk_offender_id is not null"
-  const val SYNC_OFFENDER_ID_TARGET_ROW_COUNT_QUERY = "select count(*) from hmpps_court_case_service.defendant where legacy_offender_id is not null"
 
   const val SYNC_OFFENDER_ID_QUERY = """        
       SELECT

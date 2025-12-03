@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.util.UUID
 
 data class CaseComment(
-  val id: UUID,
+  val id: UUID?,
   val legacyID: Long?,
   val defendantID: UUID?,
   val legacyDefendantID: UUID?,

@@ -23,4 +23,14 @@ object CaseCommentConstants {
       cc.deleted,
       cc.version
       from courtcaseservice.case_comments cc"""
+
+  const val SYNC_DEFENDANT_ID_MIN_QUERY = "SELECT MIN(legacy_id) FROM hmpps_court_case_service.defendant"
+  const val SYNC_DEFENDANT_ID_MAX_QUERY = "SELECT MAX(legacy_id) FROM hmpps_court_case_service.defendant"
+
+  const val SYNC_DEFENDANT_ID_QUERY = """        
+      SELECT
+      d.id,
+      d.defendant_id
+     FROM
+        hmpps_court_case_service.defendant d"""
 }
