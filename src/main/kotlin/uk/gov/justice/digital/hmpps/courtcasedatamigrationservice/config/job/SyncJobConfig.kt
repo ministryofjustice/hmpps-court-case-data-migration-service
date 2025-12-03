@@ -10,6 +10,8 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobSer
 class SyncJobConfig(
   @Qualifier("syncOffenderIdInDefendantJobService")
   private val syncOffenderIdInDefendantJobService: JobService,
+  @Qualifier("syncDefendantIdInCaseCommentJobService")
+  private val syncDefendantIdInCaseCommentJobService: JobService,
   @Qualifier("syncOffenceIdInDefendantOffenceJobService")
   private val syncOffenceIdInDefendantOffenceJobService: JobService,
   @Qualifier("syncDefendantIdInDefendantOffenceJobService")
@@ -27,6 +29,7 @@ class SyncJobConfig(
   @Bean
   fun syncJobMap(): Map<SyncJobType, () -> Unit> = linkedMapOf(
     SyncJobType.OFFENDER_ID_DEFENDANT to { syncOffenderIdInDefendantJobService.runJob() },
+    SyncJobType.DEFENDANT_ID_CASE_COMMENT to { syncDefendantIdInCaseCommentJobService.runJob() },
     SyncJobType.OFFENCE_ID_DEFENDANT_OFFENCE to { syncOffenceIdInDefendantOffenceJobService.runJob() },
     SyncJobType.DEFENDANT_ID_DEFENDANT_OFFENCE to { syncDefendantIdInDefendantOffenceJobService.runJob() },
     SyncJobType.PROSECUTION_CASE_ID_OFFENDER_MATCH_GROUP to { syncProsecutionCaseIdInOffenderMatchGroupJobService.runJob() },
