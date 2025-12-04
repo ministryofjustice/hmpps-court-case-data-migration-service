@@ -31,6 +31,9 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseC
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.MIN_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.SOURCE_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.SOURCE_ROW_COUNT_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.SYNC_CASE_ID_MAX_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.SYNC_CASE_ID_MIN_QUERY
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.SYNC_CASE_ID_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.SYNC_DEFENDANT_ID_MAX_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.SYNC_DEFENDANT_ID_MIN_QUERY
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.constant.CaseCommentConstants.SYNC_DEFENDANT_ID_QUERY
@@ -40,9 +43,11 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.SyncJob
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.source.CaseCommentQueryResult
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.CaseComment
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.ProsecutionCase
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.RowCountListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.listener.TimerJobListener
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.CaseCommentProcessor
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.sync.SyncCaseIdInCaseCommentProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.sync.SyncDefendantIdInCaseCommentProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.JobScheduler
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.SchedulingConfigRepository
@@ -50,6 +55,7 @@ import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.scheduler.Sync
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.service.JobService
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.CaseCommentValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.PostMigrationValidator
+import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync.CaseFkInCaseCommentValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync.DefendantFkInCaseCommentValidator
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync.SyncPostMigrationValidator
 import java.util.UUID
@@ -293,6 +299,109 @@ class CaseCommentBatchConfig(
   fun syncDefendantIdInCaseCommentJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = SyncJobScheduler(
     jobService = syncDefendantIdInCaseCommentJobService(syncDefendantIdInCaseCommentJob(timerJobListener)),
     syncJobType = SyncJobType.DEFENDANT_ID_CASE_COMMENT,
+    schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
+  )
+
+  /**
+   *
+   *
+   * Update CaseID FK job below.
+   *
+   *
+   *
+   */
+
+  @Bean(name = ["syncCaseIdInCaseCommentJobService"])
+  fun syncCaseIdInCaseCommentJobService(@Qualifier("syncCaseIdInCaseCommentJob") syncCaseIdInCaseCommentJob: Job): JobService = JobService(
+    jobLauncher = jobLauncher,
+    job = syncCaseIdInCaseCommentJob,
+    jdbcTemplate = JdbcTemplate(targetDataSource),
+    batchSize = 15,
+    minQuery = SYNC_CASE_ID_MIN_QUERY,
+    maxQuery = SYNC_CASE_ID_MAX_QUERY,
+    jobName = "syncCaseIdInCaseComment",
+  )
+
+  fun caseFkInCaseCommentValidationStep(): Step = StepBuilder("caseFkInCaseCommentValidationStep", jobRepository)
+    .tasklet(caseFkInCaseCommentValidationTasklet(), transactionManager)
+    .build()
+
+  fun caseFkInCaseCommentValidationTasklet(): Tasklet {
+    val strategy = CaseFkInCaseCommentValidator(
+      sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
+      targetJdbcTemplate = JdbcTemplate(targetDataSource),
+    )
+    return SyncPostMigrationValidator(strategy, 100)
+  }
+
+  @Bean
+  fun syncCaseIdInCaseCommentJob(timerJobListener: TimerJobListener): Job = JobBuilder("syncCaseIdInCaseCommentJob", jobRepository)
+    .incrementer(RunIdIncrementer())
+    .listener(timerJobListener)
+    .start(syncCaseIdInCaseCommentStep())
+    .next(caseFkInCaseCommentValidationStep())
+    .build()
+
+  @Bean
+  @StepScope
+  fun syncCaseIdInCaseCommentReader(
+    @Value("#{jobParameters['minId']}") minId: Long?,
+    @Value("#{jobParameters['maxId']}") maxId: Long?,
+  ): JdbcCursorItemReader<ProsecutionCase> = JdbcCursorItemReaderBuilder<ProsecutionCase>()
+    .name("syncCaseIdInCaseCommentReader")
+    .dataSource(targetDataSource)
+    .fetchSize(3000)
+    .sql("${SYNC_CASE_ID_QUERY} WHERE pc.legacy_id BETWEEN $minId AND $maxId ORDER BY pc.legacy_id ASC")
+    .rowMapper { rs, _ ->
+      ProsecutionCase(
+        id = rs.getObject("id", UUID::class.java),
+        legacyID = null,
+        caseID = rs.getString("case_id"),
+        cID = null,
+        sourceType = null,
+        caseMarkers = null,
+        caseDocuments = null,
+        caseURN = null,
+        createdAt = null,
+        createdBy = null,
+        updatedAt = null,
+        updatedBy = null,
+        isDeleted = null,
+        version = null,
+      )
+    }
+    .build()
+
+  @Bean
+  fun syncCaseIdInCaseCommentProcessor(): ItemProcessor<ProsecutionCase, CaseComment> = CompositeItemProcessorBuilder<ProsecutionCase, CaseComment>()
+    .delegates(listOf(SyncCaseIdInCaseCommentProcessor()))
+    .build()
+
+  @Bean
+  fun syncCaseIdInCaseCommentWriter(): JdbcBatchItemWriter<CaseComment> = JdbcBatchItemWriterBuilder<CaseComment>()
+    .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
+    .sql(
+      """UPDATE hmpps_court_case_service.case_comment SET case_id = :caseID WHERE legacy_case_id = :legacyCaseID""",
+    )
+    .dataSource(targetDataSource)
+    .assertUpdates(false)
+    .build()
+
+  @Bean
+  fun syncCaseIdInCaseCommentStep(): Step = StepBuilder("syncCaseIdInCaseCommentStep", jobRepository)
+    .chunk<ProsecutionCase, CaseComment>(batchProperties.chunkSize, transactionManager)
+    .reader(syncCaseIdInCaseCommentReader(null, null))
+    .processor(syncCaseIdInCaseCommentProcessor())
+    .writer(syncCaseIdInCaseCommentWriter())
+    .faultTolerant()
+    .retry(Throwable::class.java)
+    .retryLimit(3)
+    .build()
+
+  @Bean
+  fun syncCaseIdInCaseCommentJobScheduler(dataSource: DataSource, timerJobListener: TimerJobListener) = SyncJobScheduler(
+    jobService = syncCaseIdInCaseCommentJobService(syncCaseIdInCaseCommentJob(timerJobListener)),
+    syncJobType = SyncJobType.CASE_ID_CASE_COMMENT,
     schedulingConfigRepository = SchedulingConfigRepository(JdbcTemplate(dataSource)),
   )
 }
