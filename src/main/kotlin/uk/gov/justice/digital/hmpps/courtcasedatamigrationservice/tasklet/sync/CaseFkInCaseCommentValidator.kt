@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.tasklet.sync
 
 import org.springframework.jdbc.core.JdbcTemplate
-import java.util.UUID
 
 class CaseFkInCaseCommentValidator(
   private val sourceJdbcTemplate: JdbcTemplate,

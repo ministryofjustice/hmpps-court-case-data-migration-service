@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.processor.syn
 
 import org.springframework.batch.item.ItemProcessor
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.CaseComment
-import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.Defendant
 import uk.gov.justice.digital.hmpps.courtcasedatamigrationservice.domain.target.ProsecutionCase
 
 class SyncCaseIdInCaseCommentProcessor : ItemProcessor<ProsecutionCase, CaseComment> {
