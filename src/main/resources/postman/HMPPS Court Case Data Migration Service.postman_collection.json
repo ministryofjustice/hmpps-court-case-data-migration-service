@@ -1,0 +1,639 @@
+{
+	"info": {
+		"_postman_id": "b347b42e-6879-473a-ab09-e5ce825907f9",
+		"name": "HMPPS Court Case Data Migration Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47756517",
+		"_collection_link": "https://michael-pitt1-4965603.postman.co/workspace/Michael-Pitt's-Workspace~2ea1d35c-3d8f-4e51-84e1-037a56254fcd/collection/47756517-b347b42e-6879-473a-ab09-e5ce825907f9?action=share&source=collection_link&creator=47756517"
+	},
+	"item": [
+		{
+			"name": "Truncate Target Tables",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/db-maintenance/truncate-tables",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"db-maintenance",
+						"truncate-tables"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Drop Foreign Keys",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/db-maintenance/drop-foreign-keys",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"db-maintenance",
+						"drop-foreign-keys"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Foreign Keys",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/db-maintenance/list-foreign-keys",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"db-maintenance",
+						"list-foreign-keys"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Count Migrated Records",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/db-maintenance/count-migrated-records",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"db-maintenance",
+						"count-migrated-records"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run All",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/run-all",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"run-all"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Offence job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/offence/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"offence",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Offender job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/offender/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"offender",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Defendant job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/defendant/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"defendant",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Hearing job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/hearing/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"hearing",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Case job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/case/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"case",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Case Comment job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/case_comment/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"case_comment",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Court job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/court/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"court",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Offender Match Group job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/OFFENDER_MATCH_GROUP/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"OFFENDER_MATCH_GROUP",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Offender Match job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/OFFENDER_MATCH/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"OFFENDER_MATCH",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Defendant Offence job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/defendant_offence/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"defendant_offence",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Sync Offender ID in Defendant job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/sync/offender_id_defendant/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"sync",
+						"offender_id_defendant",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Sync Defendant ID in Case Comment job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/sync/defendant_id_case_comment/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"sync",
+						"defendant_id_case_comment",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Sync Case ID in Case Comment job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/sync/case_id_case_comment/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"sync",
+						"case_id_case_comment",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Sync Offence ID in Defendant Offence job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/sync/offence_id_defendant_offence/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"sync",
+						"offence_id_defendant_offence",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Sync Defendant ID in Defendant Offence job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/sync/defendant_id_defendant_offence/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"sync",
+						"defendant_id_defendant_offence",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Sync Prosecution Case ID in Offender Match Group job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/sync/PROSECUTION_CASE_ID_OFFENDER_MATCH_GROUP/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"sync",
+						"PROSECUTION_CASE_ID_OFFENDER_MATCH_GROUP",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Sync Defendant ID in Offender Match Group job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/sync/DEFENDANT_ID_OFFENDER_MATCH_GROUP/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"sync",
+						"DEFENDANT_ID_OFFENDER_MATCH_GROUP",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Sync Offender Match Group ID in Offender Match job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/sync/OFFENDER_MATCH_GROUP_ID_OFFENDER_MATCH/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"sync",
+						"OFFENDER_MATCH_GROUP_ID_OFFENDER_MATCH",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Sync Offender ID in Offender Match job",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/jobs/sync/OFFENDER_ID_OFFENDER_MATCH/run",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"jobs",
+						"sync",
+						"OFFENDER_ID_OFFENDER_MATCH",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Recreate Foreign Keys",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{hmpps_court_case_data_migration_service_url}}/db-maintenance/recreate-foreign-keys",
+					"host": [
+						"{{hmpps_court_case_data_migration_service_url}}"
+					],
+					"path": [
+						"db-maintenance",
+						"recreate-foreign-keys"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
