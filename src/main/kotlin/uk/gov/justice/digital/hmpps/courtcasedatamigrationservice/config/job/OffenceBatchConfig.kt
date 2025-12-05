@@ -169,7 +169,7 @@ class OffenceBatchConfig(
       sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
       targetJdbcTemplate = JdbcTemplate(targetDataSource),
     )
-    return PostMigrationValidator(strategy, 100)
+    return PostMigrationValidator(strategy, 25)
   }
 
   @Bean

@@ -5,6 +5,8 @@ import org.springframework.batch.core.JobExecution
 import org.springframework.batch.core.JobExecutionListener
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate
+import java.text.NumberFormat
+import java.util.Locale
 
 class RowCountListener(
   @Qualifier("sourceJdbcTemplate") private val sourceJdbcTemplate: JdbcTemplate,
@@ -19,8 +21,9 @@ class RowCountListener(
     val sourceCount = sourceJdbcTemplate.queryForObject(this.sourceRowCountQuery, Int::class.java)
     val targetCount = targetJdbcTemplate.queryForObject(this.targetRowCountQuery, Int::class.java)
 
-    log.info("Source row count: $sourceCount")
-    log.info("Target row count: $targetCount")
+    val numberInstance = NumberFormat.getNumberInstance(Locale.UK)
+    log.info("Source row count: ${numberInstance.format(sourceCount)}")
+    log.info("Target row count: ${numberInstance.format(targetCount)}")
 
     if (jobExecution.status.isUnsuccessful) {
       log.info("Job failed with status: ${jobExecution.status}")

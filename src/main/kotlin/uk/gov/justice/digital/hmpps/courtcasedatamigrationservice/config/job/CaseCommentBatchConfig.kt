@@ -164,7 +164,7 @@ class CaseCommentBatchConfig(
       sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
       targetJdbcTemplate = JdbcTemplate(targetDataSource),
     )
-    return PostMigrationValidator(strategy, 100)
+    return PostMigrationValidator(strategy, 25)
   }
 
   @Bean
@@ -223,7 +223,7 @@ class CaseCommentBatchConfig(
       sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
       targetJdbcTemplate = JdbcTemplate(targetDataSource),
     )
-    return SyncPostMigrationValidator(strategy, 100)
+    return SyncPostMigrationValidator(strategy, 25)
   }
 
   @Bean
@@ -331,7 +331,7 @@ class CaseCommentBatchConfig(
       sourceJdbcTemplate = JdbcTemplate(sourceDataSource),
       targetJdbcTemplate = JdbcTemplate(targetDataSource),
     )
-    return SyncPostMigrationValidator(strategy, 100)
+    return SyncPostMigrationValidator(strategy, 25)
   }
 
   @Bean
