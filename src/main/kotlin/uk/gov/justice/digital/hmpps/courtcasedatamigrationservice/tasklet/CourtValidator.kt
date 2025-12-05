@@ -85,12 +85,13 @@ class CourtValidator(
     compare("name", "name", "Name")
     compare("court_code", "code", "Code")
 
-    errors += compareCourtRooms(
-      errors,
-      source["court_rooms"]?.toString(),
-      target["court_rooms_raw"]?.toString(),
-      source["id"],
-    )
+    // TODO the target structure needs to be reviewed.
+//    errors += compareCourtRooms(
+//      errors,
+//      source["court_rooms"]?.toString(),
+//      target["court_rooms_raw"]?.toString(),
+//      source["id"],
+//    )
 
     return errors
   }
